@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PhantomPulse.Infrastructure</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PhantomPulse.SharedKernel\PhantomPulse.SharedKernel.csproj" />
+    <ProjectReference Include="..\Modules\Foundation\PhantomPulse.Foundation.csproj" />
+    <ProjectReference Include="..\Modules\Crm\PhantomPulse.Crm.csproj" />
+    <ProjectReference Include="..\Modules\Messaging\PhantomPulse.Messaging.csproj" />
+    <ProjectReference Include="..\Modules\Automation\PhantomPulse.Automation.csproj" />
+    <ProjectReference Include="..\Modules\Campaigns\PhantomPulse.Campaigns.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design"           Version="10.*" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"          Version="10.*" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="1.*" />
+    <PackageReference Include="Hangfire.AspNetCore"                            Version="1.*" />
+    <PackageReference Include="Hangfire.PostgreSql"                            Version="1.*" />
+    <PackageReference Include="StackExchange.Redis"                            Version="2.*" />
+  </ItemGroup>
+</Project>

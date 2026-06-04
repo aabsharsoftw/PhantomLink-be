@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PhantomPulse.Infrastructure\PhantomPulse.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Foundation\PhantomPulse.Foundation.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Crm\PhantomPulse.Crm.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Messaging\PhantomPulse.Messaging.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Automation\PhantomPulse.Automation.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Campaigns\PhantomPulse.Campaigns.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Serilog.AspNetCore" Version="9.*" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.*" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.*" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.*" />
+  </ItemGroup>
+</Project>

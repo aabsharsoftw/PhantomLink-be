@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "PhantomPulse.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:63726;http://localhost:63727"
+    }
+  }
+}

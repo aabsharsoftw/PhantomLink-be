@@ -1,0 +1,21 @@
+How login resolution should work:
+
+1. Request hits a domain
+        ↓
+2. Domain → resolves to AgencyId (slug or custom domain)
+        ↓
+3. Email + Password lookup scoped to that AgencyId
+        ↓
+4. Determine Scope → issue JWT with correct claims
+
+
+JWT claims should carry:
+{
+  userId,
+  scope,        // Platform | Agency | SubAccount
+  agencyId,     // always present
+  subAccountId  // only for SubAccount scope
+}
+
+Agency Owner should also be able to switch into any sub-account without re-logging in (impersonation)
+not a login, just a context switch that issues a new short-lived JWT with a specific SubAccountId.
