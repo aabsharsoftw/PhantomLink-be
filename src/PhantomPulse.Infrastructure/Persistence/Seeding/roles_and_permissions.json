@@ -1,0 +1,680 @@
+{
+  "roles": [
+    {
+      "isSystem": true,
+      "name": "Platform Admin",
+      "scope": "Platform",
+      "systemRoleType": "PlatformAdmin"
+    },
+    {
+      "name": "Agency Owner",
+      "systemRoleType": "AgencyOwner",
+      "scope": "Agency",
+      "isSystem": true
+    },
+    {
+      "name": "Agency Admin",
+      "systemRoleType": "AgencyAdmin",
+      "scope": "Agency",
+      "isSystem": true
+    },
+    {
+      "name": "Account Admin",
+      "systemRoleType": "AccountAdmin",
+      "scope": "SubAccount",
+      "isSystem": true
+    },
+    {
+      "name": "Manager",
+      "systemRoleType": "Manager",
+      "scope": "SubAccount",
+      "isSystem": true
+    },
+    {
+      "name": "User",
+      "systemRoleType": "User",
+      "scope": "SubAccount",
+      "isSystem": true
+    }
+  ],
+
+  "permissions": [
+    "dashboard.view",
+
+    "contacts.view",
+    "contacts.create",
+    "contacts.edit",
+    "contacts.delete",
+
+    "conversations.view",
+    "conversations.create",
+    "conversations.edit",
+    "conversations.delete",
+
+    "telephony.view",
+    "telephony.create",
+    "telephony.edit",
+    "telephony.delete",
+
+    "lead_management.view",
+    "lead_management.create",
+    "lead_management.edit",
+    "lead_management.delete",
+
+    "calendars.view",
+    "calendars.create",
+    "calendars.edit",
+    "calendars.delete",
+
+    "marketing.view",
+    "marketing.create",
+    "marketing.edit",
+    "marketing.delete",
+
+    "ai_automation.view",
+    "ai_automation.create",
+    "ai_automation.edit",
+    "ai_automation.execute",
+    "ai_automation.delete",
+
+    "ai_agents.view",
+    "ai_agents.create",
+    "ai_agents.edit",
+    "ai_agents.delete",
+
+    "templates.view",
+    "templates.create",
+    "templates.edit",
+    "templates.delete",
+
+    "social_planner.view",
+    "social_planner.create",
+    "social_planner.edit",
+    "social_planner.delete",
+
+    "reputation.view",
+    "reputation.manage",
+
+    "intelligence.view",
+
+    "reporting.view",
+
+    "agency_view.view",
+
+    "settings.view",
+
+    "business_profile.view",
+    "business_profile.edit",
+
+    "branding.view",
+    "branding.edit",
+
+    "team_roles.view",
+    "team_roles.create",
+    "team_roles.edit",
+    "team_roles.delete",
+
+    "users.view",
+    "users.create",
+    "users.edit",
+    "users.delete",
+
+    "billing_plan.view",
+    "billing_plan.manage",
+
+    "whatsapp_business.view",
+    "whatsapp_business.edit",
+
+    "email_smtp.view",
+    "email_smtp.edit",
+
+    "sms_twilio.view",
+    "sms_twilio.edit",
+
+    "google_business.view",
+    "google_business.edit",
+
+    "pipelines_stages.view",
+    "pipelines_stages.create",
+    "pipelines_stages.edit",
+    "pipelines_stages.delete",
+
+    "custom_fields.view",
+    "custom_fields.create",
+    "custom_fields.edit",
+    "custom_fields.delete",
+
+    "tags_segments.view",
+    "tags_segments.create",
+    "tags_segments.edit",
+    "tags_segments.delete",
+
+    "notifications.view",
+    "notifications.edit",
+
+    "webhooks.view",
+    "webhooks.create",
+    "webhooks.edit",
+    "webhooks.delete",
+
+    "api_keys.view",
+    "api_keys.create",
+    "api_keys.revoke",
+    "api_keys.delete"
+  ],
+
+  "rolePermissions": {
+    "PlatformAdmin": [
+      "dashboard.view",
+
+      "contacts.view",
+      "contacts.create",
+      "contacts.edit",
+      "contacts.delete",
+
+      "conversations.view",
+      "conversations.create",
+      "conversations.edit",
+      "conversations.delete",
+
+      "telephony.view",
+      "telephony.create",
+      "telephony.edit",
+      "telephony.delete",
+
+      "lead_management.view",
+      "lead_management.create",
+      "lead_management.edit",
+      "lead_management.delete",
+
+      "calendars.view",
+      "calendars.create",
+      "calendars.edit",
+      "calendars.delete",
+
+      "marketing.view",
+      "marketing.create",
+      "marketing.edit",
+      "marketing.delete",
+
+      "ai_automation.view",
+      "ai_automation.create",
+      "ai_automation.edit",
+      "ai_automation.execute",
+      "ai_automation.delete",
+
+      "ai_agents.view",
+      "ai_agents.create",
+      "ai_agents.edit",
+      "ai_agents.delete",
+
+      "templates.view",
+      "templates.create",
+      "templates.edit",
+      "templates.delete",
+
+      "social_planner.view",
+      "social_planner.create",
+      "social_planner.edit",
+      "social_planner.delete",
+
+      "reputation.view",
+      "reputation.manage",
+
+      "intelligence.view",
+
+      "reporting.view",
+
+      "agency_view.view",
+
+      "settings.view",
+
+      "business_profile.view",
+      "business_profile.edit",
+
+      "branding.view",
+      "branding.edit",
+
+      "team_roles.view",
+      "team_roles.create",
+      "team_roles.edit",
+      "team_roles.delete",
+
+      "users.view",
+      "users.create",
+      "users.edit",
+      "users.delete",
+
+      "billing_plan.view",
+      "billing_plan.manage",
+
+      "whatsapp_business.view",
+      "whatsapp_business.edit",
+
+      "email_smtp.view",
+      "email_smtp.edit",
+
+      "sms_twilio.view",
+      "sms_twilio.edit",
+
+      "google_business.view",
+      "google_business.edit",
+
+      "pipelines_stages.view",
+      "pipelines_stages.create",
+      "pipelines_stages.edit",
+      "pipelines_stages.delete",
+
+      "custom_fields.view",
+      "custom_fields.create",
+      "custom_fields.edit",
+      "custom_fields.delete",
+
+      "tags_segments.view",
+      "tags_segments.create",
+      "tags_segments.edit",
+      "tags_segments.delete",
+
+      "notifications.view",
+      "notifications.edit",
+
+      "webhooks.view",
+      "webhooks.create",
+      "webhooks.edit",
+      "webhooks.delete",
+
+      "api_keys.view",
+      "api_keys.create",
+      "api_keys.revoke",
+      "api_keys.delete"
+    ],
+
+    "AgencyOwner": [
+      "dashboard.view",
+
+      "contacts.view",
+      "contacts.create",
+      "contacts.edit",
+      "contacts.delete",
+
+      "conversations.view",
+      "conversations.create",
+      "conversations.edit",
+      "conversations.delete",
+
+      "telephony.view",
+      "telephony.create",
+      "telephony.edit",
+      "telephony.delete",
+
+      "lead_management.view",
+      "lead_management.create",
+      "lead_management.edit",
+      "lead_management.delete",
+
+      "calendars.view",
+      "calendars.create",
+      "calendars.edit",
+      "calendars.delete",
+
+      "marketing.view",
+      "marketing.create",
+      "marketing.edit",
+      "marketing.delete",
+
+      "ai_automation.view",
+      "ai_automation.create",
+      "ai_automation.edit",
+      "ai_automation.execute",
+      "ai_automation.delete",
+
+      "ai_agents.view",
+      "ai_agents.create",
+      "ai_agents.edit",
+      "ai_agents.delete",
+
+      "templates.view",
+      "templates.create",
+      "templates.edit",
+      "templates.delete",
+
+      "social_planner.view",
+      "social_planner.create",
+      "social_planner.edit",
+      "social_planner.delete",
+
+      "reputation.view",
+      "reputation.manage",
+
+      "intelligence.view",
+
+      "reporting.view",
+
+      "agency_view.view",
+
+      "settings.view",
+
+      "business_profile.view",
+      "business_profile.edit",
+
+      "branding.view",
+      "branding.edit",
+
+      "team_roles.view",
+      "team_roles.create",
+      "team_roles.edit",
+      "team_roles.delete",
+
+      "users.view",
+      "users.create",
+      "users.edit",
+      "users.delete",
+
+      "billing_plan.view",
+      "billing_plan.manage",
+
+      "whatsapp_business.view",
+      "whatsapp_business.edit",
+
+      "email_smtp.view",
+      "email_smtp.edit",
+
+      "sms_twilio.view",
+      "sms_twilio.edit",
+
+      "google_business.view",
+      "google_business.edit",
+
+      "pipelines_stages.view",
+      "pipelines_stages.create",
+      "pipelines_stages.edit",
+      "pipelines_stages.delete",
+
+      "custom_fields.view",
+      "custom_fields.create",
+      "custom_fields.edit",
+      "custom_fields.delete",
+
+      "tags_segments.view",
+      "tags_segments.create",
+      "tags_segments.edit",
+      "tags_segments.delete",
+
+      "notifications.view",
+      "notifications.edit",
+
+      "webhooks.view",
+      "webhooks.create",
+      "webhooks.edit",
+      "webhooks.delete",
+
+      "api_keys.view",
+      "api_keys.create",
+      "api_keys.revoke",
+      "api_keys.delete"
+    ],
+
+    "AgencyAdmin": [
+      "dashboard.view",
+
+      "contacts.view",
+      "contacts.create",
+      "contacts.edit",
+      "contacts.delete",
+
+      "conversations.view",
+      "conversations.create",
+      "conversations.edit",
+      "conversations.delete",
+
+      "telephony.view",
+      "telephony.create",
+      "telephony.edit",
+      "telephony.delete",
+
+      "lead_management.view",
+      "lead_management.create",
+      "lead_management.edit",
+      "lead_management.delete",
+
+      "calendars.view",
+      "calendars.create",
+      "calendars.edit",
+      "calendars.delete",
+
+      "marketing.view",
+      "marketing.create",
+      "marketing.edit",
+      "marketing.delete",
+
+      "ai_automation.view",
+      "ai_automation.create",
+      "ai_automation.edit",
+      "ai_automation.execute",
+      "ai_automation.delete",
+
+      "ai_agents.view",
+      "ai_agents.create",
+      "ai_agents.edit",
+      "ai_agents.delete",
+
+      "templates.view",
+      "templates.create",
+      "templates.edit",
+      "templates.delete",
+
+      "social_planner.view",
+      "social_planner.create",
+      "social_planner.edit",
+      "social_planner.delete",
+
+      "reputation.view",
+      "reputation.manage",
+
+      "intelligence.view",
+
+      "reporting.view",
+
+      "agency_view.view",
+
+      "settings.view",
+
+      "business_profile.view",
+      "business_profile.edit",
+
+      "team_roles.view",
+      "team_roles.create",
+      "team_roles.edit",
+      "team_roles.delete",
+
+      "users.view",
+      "users.create",
+      "users.edit",
+      "users.delete",
+
+      "whatsapp_business.view",
+      "whatsapp_business.edit",
+
+      "email_smtp.view",
+      "email_smtp.edit",
+
+      "sms_twilio.view",
+      "sms_twilio.edit",
+
+      "google_business.view",
+      "google_business.edit",
+
+      "pipelines_stages.view",
+      "pipelines_stages.create",
+      "pipelines_stages.edit",
+      "pipelines_stages.delete",
+
+      "custom_fields.view",
+      "custom_fields.create",
+      "custom_fields.edit",
+      "custom_fields.delete",
+
+      "tags_segments.view",
+      "tags_segments.create",
+      "tags_segments.edit",
+      "tags_segments.delete",
+
+      "notifications.view",
+      "notifications.edit"
+    ],
+
+    "AccountAdmin": [
+      "dashboard.view",
+
+      "contacts.view",
+      "contacts.create",
+      "contacts.edit",
+      "contacts.delete",
+
+      "conversations.view",
+      "conversations.create",
+      "conversations.edit",
+      "conversations.delete",
+
+      "telephony.view",
+      "telephony.create",
+      "telephony.edit",
+      "telephony.delete",
+
+      "lead_management.view",
+      "lead_management.create",
+      "lead_management.edit",
+      "lead_management.delete",
+
+      "calendars.view",
+      "calendars.create",
+      "calendars.edit",
+      "calendars.delete",
+
+      "marketing.view",
+      "marketing.create",
+      "marketing.edit",
+      "marketing.delete",
+
+      "ai_automation.view",
+      "ai_automation.create",
+      "ai_automation.edit",
+      "ai_automation.execute",
+      "ai_automation.delete",
+
+      "ai_agents.view",
+      "ai_agents.create",
+      "ai_agents.edit",
+      "ai_agents.delete",
+
+      "templates.view",
+      "templates.create",
+      "templates.edit",
+      "templates.delete",
+
+      "social_planner.view",
+      "social_planner.create",
+      "social_planner.edit",
+      "social_planner.delete",
+
+      "reputation.view",
+
+      "intelligence.view",
+
+      "reporting.view",
+
+      "settings.view",
+
+      "business_profile.view",
+      "business_profile.edit",
+
+      "team_roles.view",
+      "team_roles.create",
+      "team_roles.edit",
+      "team_roles.delete",
+
+      "users.view",
+      "users.create",
+      "users.edit",
+      "users.delete",
+
+      "whatsapp_business.view",
+      "whatsapp_business.edit",
+
+      "email_smtp.view",
+      "email_smtp.edit",
+
+      "sms_twilio.view",
+      "sms_twilio.edit",
+
+      "google_business.view",
+      "google_business.edit",
+
+      "pipelines_stages.view",
+      "pipelines_stages.create",
+      "pipelines_stages.edit",
+      "pipelines_stages.delete",
+
+      "custom_fields.view",
+      "custom_fields.create",
+      "custom_fields.edit",
+      "custom_fields.delete",
+
+      "tags_segments.view",
+      "tags_segments.create",
+      "tags_segments.edit",
+      "tags_segments.delete",
+
+      "notifications.view",
+      "notifications.edit"
+    ],
+
+    "Manager": [
+      "dashboard.view",
+
+      "contacts.view",
+      "contacts.create",
+      "contacts.edit",
+
+      "conversations.view",
+      "conversations.create",
+      "conversations.edit",
+
+      "telephony.view",
+      "telephony.create",
+
+      "lead_management.view",
+      "lead_management.create",
+      "lead_management.edit",
+
+      "calendars.view",
+      "calendars.create",
+      "calendars.edit",
+
+      "marketing.view",
+      "marketing.create",
+      "marketing.edit",
+
+      "templates.view",
+
+      "reporting.view",
+
+      "intelligence.view"
+    ],
+
+    "User": [
+      "dashboard.view",
+
+      "contacts.view",
+
+      "conversations.view",
+      "conversations.create",
+
+      "telephony.view",
+
+      "lead_management.view",
+
+      "calendars.view"
+    ]
+  }
+}

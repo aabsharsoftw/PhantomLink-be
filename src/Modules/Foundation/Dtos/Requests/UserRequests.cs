@@ -1,3 +1,4 @@
+using PhantomPulse.Foundation.Entities;
 using PhantomPulse.SharedKernel.Domain;
 using System.ComponentModel.DataAnnotations;
 
@@ -27,3 +28,19 @@ public sealed record UpdateUserRequest(
     [StringLength(30)]  string?  Phone,
     Guid?                        RoleId,
     bool?                        IsActive);
+
+// ─── Role management ─────────────────────────────────────────────────────────
+
+public sealed record CreateRoleRequest(
+    [Required, StringLength(100)] string Name,
+    [StringLength(500)] string?          Description,
+    [Required] RoleScope                 Scope,
+    Guid?                                SubAccountId,
+    IReadOnlyList<string>?               PermissionKeys);
+
+public sealed record UpdateRoleRequest(
+    [StringLength(100)] string? Name,
+    [StringLength(500)] string? Description);
+
+public sealed record SetRolePermissionsRequest(
+    [Required] IReadOnlyList<string> PermissionKeys);

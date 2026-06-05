@@ -13,8 +13,8 @@ using PhantomPulse.Infrastructure.Persistence;
 namespace PhantomPulse.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260605104112_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20260605170902_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1126,6 +1126,10 @@ namespace PhantomPulse.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text")
+                        .HasColumnName("phone");
 
                     b.Property<Guid?>("RoleId")
                         .HasColumnType("uuid")

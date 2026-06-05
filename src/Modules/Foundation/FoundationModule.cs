@@ -10,6 +10,7 @@ public static class FoundationModule
         services.AddScoped<AuthService>();
         services.AddScoped<RbacService>();
         services.AddScoped<UserService>();
+        services.AddScoped<RolesService>();
         return services;
     }
 }

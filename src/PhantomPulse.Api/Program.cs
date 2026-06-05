@@ -3,14 +3,13 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Scalar.AspNetCore;
 using PhantomPulse.Api.Middleware;
 using PhantomPulse.Automation;
 using PhantomPulse.Campaigns;
 using PhantomPulse.Crm;
 using PhantomPulse.Foundation;
 using PhantomPulse.Infrastructure;
-using PhantomPulse.Infrastructure.Persistence;
+using PhantomPulse.Infrastructure.Persistence.Seeding;
 using PhantomPulse.Infrastructure.Realtime;
 using PhantomPulse.Messaging;
 using PhantomPulse.SharedKernel.Domain;
@@ -32,6 +31,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
+        opt.MapInboundClaims = false; // keep "sub", "email" etc. as-is; don't rename to ClaimTypes.*
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Auth:Secret"]!));
         opt.TokenValidationParameters = new TokenValidationParameters
         {
@@ -68,6 +68,7 @@ builder.Services.AddCampaignsModule(builder.Configuration);
 
 builder.Services.AddCors(opt => opt.AddDefaultPolicy(p => p
     .WithOrigins(
+        "http://localhost:5000",
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:5175",
@@ -81,7 +82,9 @@ builder.Services.AddCors(opt => opt.AddDefaultPolicy(p => p
     .AllowAnyMethod()
     .AllowCredentials()));
 
-builder.Services.AddControllers(opt => opt.Conventions.Add(new ApiPrefixConvention()));
+builder.Services.AddControllers(opt => opt.Conventions.Add(new ApiPrefixConvention()))
+    .AddJsonOptions(opt =>
+        opt.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddOpenApi(opt =>
 {
     opt.AddDocumentTransformer((doc, ctx, ct) =>
@@ -93,20 +96,24 @@ builder.Services.AddOpenApi(opt =>
 
 var app = builder.Build();
 
-await DataSeeder.RunAsync(app.Services);
+await DatabaseSeeder.RunAsync(app.Services);
 
 app.UseSerilogRequestLogging();
 app.UseCors();
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.MapOpenApi();
-app.MapScalarApiReference(opt => opt.WithTitle("PhantomPulse API").WithTheme(ScalarTheme.Default));
+app.UseSwaggerUI(opt =>
+{
+    opt.SwaggerEndpoint("/openapi/v1.json", "PhantomPulse API v1");
+    opt.RoutePrefix = "swagger";
+});
 app.UseAuthentication();
 app.UseMiddleware<TenantMiddleware>();
 app.UseMiddleware<PermissionEnforcementMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGet("/", () => Results.Redirect("/scalar/v1"));
+app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapHangfireDashboard("/jobs");
 app.MapHub<InboxHub>("/hubs/inbox");
 

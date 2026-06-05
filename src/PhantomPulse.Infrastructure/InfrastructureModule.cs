@@ -3,7 +3,9 @@ using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PhantomPulse.Foundation.Authorization;
 using PhantomPulse.Infrastructure.Persistence;
+using PhantomPulse.Infrastructure.Persistence.Seeding;
 using PhantomPulse.Infrastructure.Realtime;
 
 namespace PhantomPulse.Infrastructure;
@@ -25,7 +27,15 @@ public static class InfrastructureModule
             .UseRecommendedSerializerSettings()
             .UsePostgreSqlStorage(conn));
         services.AddHangfireServer(opt => opt.Queues = new[] { "campaigns", "automation", "imports", "default" });
-        services.AddScoped<DataSeeder>();
+        services.AddSingleton<IRolePermissionProvider, JsonRolePermissionProvider>();
+        // System seeders (run in all environments)
+        services.AddScoped<IDataSeeder, PermissionSeeder>();
+        services.AddScoped<IDataSeeder, RoleSeeder>();
+        services.AddScoped<IDataSeeder, SystemUserSeeder>();
+        // Demo seeders (Development only — gated by IsDemoOnly)
+        services.AddScoped<IDataSeeder, DemoDataSeeder>();
+        services.AddScoped<IDataSeeder, DemoContactsSeeder>();
+        services.AddScoped<DatabaseSeeder>();
 
         return services;
     }

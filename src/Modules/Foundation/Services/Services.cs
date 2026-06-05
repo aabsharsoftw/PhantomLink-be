@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using PhantomPulse.Foundation.Authorization;
 using PhantomPulse.Foundation.Dtos.Requests;
@@ -16,7 +17,7 @@ using System.Text.Json;
 
 namespace PhantomPulse.Foundation.Services;
 
-public class AuthService(DbContext db, IConfiguration config)
+public class AuthService(DbContext db, IConfiguration config, IRolePermissionProvider permissionProvider, RbacService rbac)
 {
     public async Task<AuthResult> LoginAsync(string email, string password, CancellationToken ct = default)
     {
@@ -95,7 +96,11 @@ public class AuthService(DbContext db, IConfiguration config)
         db.Set<User>().Add(user);
         await db.SaveChangesAsync(ct);
 
-        var permIds = RolePermissionMatrix.GetPermissionIds(SystemRoleType.AgencyOwner);
+        var ownerKeys = permissionProvider.GetPermissionKeys(SystemRoleType.AgencyOwner);
+        var permIds = await db.Set<Permission>()
+            .Where(p => ownerKeys.Contains(p.Key))
+            .Select(p => p.Id)
+            .ToListAsync(ct);
         db.Set<RolePermission>().AddRange(permIds.Select(id => new RolePermission
         {
             RoleId = ownerRole.Id,
@@ -106,7 +111,7 @@ public class AuthService(DbContext db, IConfiguration config)
         db.Set<RefreshToken>().Add(rt);
         await db.SaveChangesAsync(ct);
 
-        await SubAccountProvisioner.EnsureRolesAsync(db, subAccountId, ct);
+        await SubAccountProvisioner.EnsureRolesAsync(db, subAccountId, permissionProvider, ct);
 
         return new AuthResult(GenerateToken(user, ownerRole.Name), rt.Token, user.Id, user.Email,
             name.Trim(), ownerRole.Name, agencyId, null);
@@ -154,16 +159,10 @@ public class AuthService(DbContext db, IConfiguration config)
     {
         var user = await db.Set<User>().IgnoreQueryFilters()
             .Include(u => u.Role)
-                .ThenInclude(r => r!.RolePermissions)
-                    .ThenInclude(rp => rp.Permission)
             .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, ct)
             ?? throw new KeyNotFoundException("User not found");
 
-        var permissions = user.Role?.RolePermissions
-            .Select(rp => rp.Permission.Key)
-            .OrderBy(k => k)
-            .ToList() ?? [];
-
+        var permissions = await rbac.GetPermissionsAsync(user.Id, user.TenantId, ct);
         return new MeData(user, user.Role, permissions);
     }
 
@@ -329,7 +328,13 @@ public class UserService(DbContext db, ICurrentUser caller, RbacService rbac)
             if (!subExists)
                 throw new ArgumentException("Sub-account not found or does not belong to your agency");
 
-            await SubAccountProvisioner.EnsureRolesAsync(db, targetSubAccountId.Value, ct);
+            // System roles are provisioned once during sub-account creation (SignupAsync / SubAccountService).
+            // If they are missing here it means the sub-account was never properly provisioned.
+            var rolesProvisioned = await db.Set<Role>().IgnoreQueryFilters()
+                .AnyAsync(r => r.TenantId == targetSubAccountId.Value && r.IsSystem && !r.IsDeleted, ct);
+            if (!rolesProvisioned)
+                throw new InvalidOperationException(
+                    $"Sub-account {targetSubAccountId.Value} has no system roles. Ensure the sub-account was created through the provisioning flow.");
         }
 
         var emailTaken = await db.Set<User>().IgnoreQueryFilters()
@@ -472,9 +477,11 @@ public class UserService(DbContext db, ICurrentUser caller, RbacService rbac)
 
 // ─── Sub-Account Provisioner ─────────────────────────────────────────────────
 
-internal static class SubAccountProvisioner
+public static class SubAccountProvisioner
 {
-    internal static async Task EnsureRolesAsync(DbContext db, Guid subAccountId, CancellationToken ct)
+    public static async Task EnsureRolesAsync(
+        DbContext db, Guid subAccountId,
+        IRolePermissionProvider permissionProvider, CancellationToken ct)
     {
         var hasRoles = await db.Set<Role>().IgnoreQueryFilters()
             .AnyAsync(r => r.TenantId == subAccountId && r.IsSystem && !r.IsDeleted, ct);
@@ -486,6 +493,16 @@ internal static class SubAccountProvisioner
             (SystemRoleType.Manager,      "Manager",       "Operational access within this account"),
             (SystemRoleType.User,         "User",          "Standard day-to-day access"),
         };
+
+        // Batch-resolve all permission IDs for the three sub-account role types in one query
+        var allKeys = definitions
+            .SelectMany(d => permissionProvider.GetPermissionKeys(d.Item1))
+            .Distinct()
+            .ToList();
+
+        var permissionsByKey = await db.Set<Permission>()
+            .Where(p => allKeys.Contains(p.Key))
+            .ToDictionaryAsync(p => p.Key, p => p.Id, ct);
 
         foreach (var (type, name, desc) in definitions)
         {
@@ -499,21 +516,217 @@ internal static class SubAccountProvisioner
                 SystemRoleType = type,
             };
             db.Set<Role>().Add(role);
+
+            var keys = permissionProvider.GetPermissionKeys(type);
             db.Set<RolePermission>().AddRange(
-                RolePermissionMatrix.GetPermissionIds(type)
-                    .Select(pid => new RolePermission { RoleId = role.Id, PermissionId = pid }));
+                keys.Where(k => permissionsByKey.ContainsKey(k))
+                    .Select(k => new RolePermission { RoleId = role.Id, PermissionId = permissionsByKey[k] }));
         }
         await db.SaveChangesAsync(ct);
     }
 }
 
-public class RbacService(IDistributedCache cache, DbContext db)
+// ─── Roles & Permissions ──────────────────────────────────────────────────────
+
+public class RolesService(DbContext db, ICurrentUser caller, RbacService rbac)
 {
+    public async Task<List<RoleDto>> ListAsync(CancellationToken ct)
+    {
+        IQueryable<Role> query = caller.Scope switch
+        {
+            UserScope.Platform => db.Set<Role>().IgnoreQueryFilters()
+                                    .Where(r => r.TenantId == Guid.Empty),
+
+            // Agency owners/admins need to assign both agency-scoped roles AND
+            // sub-account-scoped roles (which live under subAccountId, not agencyId).
+            UserScope.Agency => db.Set<Role>().IgnoreQueryFilters()
+                                    .Where(r => r.TenantId == caller.AgencyId!.Value ||
+                                                db.Set<SubAccount>().Any(sa =>
+                                                    sa.Id == r.TenantId &&
+                                                    sa.AgencyId == caller.AgencyId!.Value &&
+                                                    sa.IsActive)),
+
+            _ => db.Set<Role>().IgnoreQueryFilters()
+                    .Where(r => r.TenantId == caller.SubAccountId!.Value),
+        };
+
+        var roles = await query
+            .Where(r => !r.IsDeleted)
+            .Include(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+            .OrderBy(r => r.Name)
+            .ToListAsync(ct);
+
+        return roles.Select(MapRole).ToList();
+    }
+
+    public async Task<List<PermissionDto>> ListAllPermissionsAsync(CancellationToken ct)
+    {
+        var permissions = await db.Set<Permission>()
+            .OrderBy(p => p.Module).ThenBy(p => p.Action)
+            .ToListAsync(ct);
+
+        return permissions
+            .Select(p => new PermissionDto(p.Id, p.Key, p.Description, p.Module, p.Action))
+            .ToList();
+    }
+
+    public async Task<RoleDto> CreateAsync(CreateRoleRequest req, CancellationToken ct)
+    {
+        var tenantId = ResolveTenantId(req.Scope, req.SubAccountId);
+
+        var role = new Role
+        {
+            TenantId    = tenantId,
+            Name        = req.Name.Trim(),
+            Description = req.Description?.Trim() ?? "",
+            IsSystem    = false,
+            Scope       = req.Scope,
+            CreatedBy   = caller.UserId,
+        };
+        db.Set<Role>().Add(role);
+
+        if (req.PermissionKeys is { Count: > 0 })
+        {
+            var permIds = await db.Set<Permission>()
+                .Where(p => req.PermissionKeys.Contains(p.Key))
+                .Select(p => p.Id)
+                .ToListAsync(ct);
+            db.Set<RolePermission>().AddRange(
+                permIds.Select(pid => new RolePermission { RoleId = role.Id, PermissionId = pid }));
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        var created = await db.Set<Role>().IgnoreQueryFilters()
+            .Include(r => r.RolePermissions).ThenInclude(rp => rp.Permission)
+            .FirstAsync(r => r.Id == role.Id, ct);
+        return MapRole(created);
+    }
+
+    public async Task<RoleDto> UpdateAsync(Guid id, UpdateRoleRequest req, CancellationToken ct)
+    {
+        var role = await db.Set<Role>().IgnoreQueryFilters()
+            .Include(r => r.RolePermissions).ThenInclude(rp => rp.Permission)
+            .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, ct)
+            ?? throw new KeyNotFoundException("Role not found");
+
+        ValidateCallerAccess(role);
+
+        if (req.Name        is not null) role.Name        = req.Name.Trim();
+        if (req.Description is not null) role.Description = req.Description.Trim();
+        role.UpdatedAt = DateTime.UtcNow;
+        role.UpdatedBy = caller.UserId;
+        await db.SaveChangesAsync(ct);
+        return MapRole(role);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var role = await db.Set<Role>().IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, ct)
+            ?? throw new KeyNotFoundException("Role not found");
+
+        ValidateCallerAccess(role);
+
+        if (role.IsSystem)
+            throw new InvalidOperationException("System roles cannot be deleted");
+
+        var userCount = await db.Set<User>().IgnoreQueryFilters()
+            .CountAsync(u => u.RoleId == id && !u.IsDeleted, ct);
+        if (userCount > 0)
+            throw new InvalidOperationException(
+                $"Cannot delete role: {userCount} user(s) are currently assigned to it");
+
+        role.IsDeleted = true;
+        role.DeletedAt = DateTime.UtcNow;
+        role.DeletedBy = caller.UserId;
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task<RoleDto> SetPermissionsAsync(Guid id, IReadOnlyList<string> permissionKeys, CancellationToken ct)
+    {
+        var role = await db.Set<Role>().IgnoreQueryFilters()
+            .Include(r => r.RolePermissions)
+            .FirstOrDefaultAsync(r => r.Id == id && !r.IsDeleted, ct)
+            ?? throw new KeyNotFoundException("Role not found");
+
+        ValidateCallerAccess(role);
+
+        db.Set<RolePermission>().RemoveRange(role.RolePermissions);
+
+        var permIds = await db.Set<Permission>()
+            .Where(p => permissionKeys.Contains(p.Key))
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+        db.Set<RolePermission>().AddRange(
+            permIds.Select(pid => new RolePermission { RoleId = role.Id, PermissionId = pid }));
+
+        await db.SaveChangesAsync(ct);
+
+        // Invalidate cache for every user assigned this role
+        var affected = await db.Set<User>().IgnoreQueryFilters()
+            .Where(u => u.RoleId == id && !u.IsDeleted)
+            .Select(u => new { u.Id, u.TenantId })
+            .ToListAsync(ct);
+        foreach (var u in affected)
+            await rbac.InvalidateUserCacheAsync(u.Id, u.TenantId, ct);
+
+        var updated = await db.Set<Role>().IgnoreQueryFilters()
+            .Include(r => r.RolePermissions).ThenInclude(rp => rp.Permission)
+            .FirstAsync(r => r.Id == id, ct);
+        return MapRole(updated);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private Guid ResolveTenantId(RoleScope scope, Guid? subAccountId) =>
+        (caller.Scope, scope) switch
+        {
+            (UserScope.Platform, RoleScope.SubAccount) =>
+                subAccountId ?? throw new ArgumentException("subAccountId is required for SubAccount-scoped roles"),
+            (UserScope.Platform, _) =>
+                caller.AgencyId ?? Guid.Empty,
+            (UserScope.Agency, RoleScope.Agency) =>
+                caller.AgencyId!.Value,
+            (UserScope.Agency, RoleScope.SubAccount) =>
+                subAccountId ?? throw new ArgumentException("subAccountId is required for SubAccount-scoped roles"),
+            (UserScope.SubAccount, RoleScope.SubAccount) =>
+                caller.SubAccountId!.Value,
+            _ => throw new ArgumentException(
+                $"A {caller.Scope}-scoped caller cannot create {scope}-scoped roles"),
+        };
+
+    private void ValidateCallerAccess(Role role)
+    {
+        if (caller.Scope == UserScope.Platform) return;
+        var expectedTenant = caller.Scope == UserScope.Agency
+            ? caller.AgencyId : caller.SubAccountId;
+        if (role.TenantId != expectedTenant)
+            throw new UnauthorizedAccessException("Access denied to this role");
+    }
+
+    private static RoleDto MapRole(Role r) => new(
+        r.Id, r.Name, r.Description, r.Scope.ToString(),
+        r.SystemRoleType?.ToString(), r.IsSystem,
+        r.RolePermissions.Select(rp => rp.Permission.Key).OrderBy(k => k).ToList(),
+        r.TenantId);
+}
+
+public class RbacService(IDistributedCache cache, DbContext db, ILogger<RbacService> logger)
+{
+    private static readonly DistributedCacheEntryOptions CacheTtl =
+        new() { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) };
+
     public async Task<bool> HasPermissionAsync(Guid userId, string permission, Guid tenantId, CancellationToken ct = default)
     {
         var cacheKey = $"rbac:{tenantId}:{userId}:{permission}";
-        var cached = await cache.GetStringAsync(cacheKey, ct);
-        if (cached is not null) return cached == "1";
+        try
+        {
+            var cached = await cache.GetStringAsync(cacheKey, ct);
+            if (cached is not null) return cached == "1";
+        }
+        catch (Exception ex) { logger.LogWarning(ex, "Redis unavailable — HasPermissionAsync falling back to DB"); }
 
         var has = await db.Set<RolePermission>()
             .AnyAsync(rp =>
@@ -521,17 +734,22 @@ public class RbacService(IDistributedCache cache, DbContext db)
                 rp.Role.Users.Any(u => u.Id == userId) &&
                 rp.Permission.Key == permission, ct);
 
-        await cache.SetStringAsync(cacheKey, has ? "1" : "0",
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }, ct);
+        try { await cache.SetStringAsync(cacheKey, has ? "1" : "0", CacheTtl, ct); }
+        catch { /* Redis down — result still correct, just not cached */ }
+
         return has;
     }
 
     public async Task<IReadOnlyList<string>> GetPermissionsAsync(Guid userId, Guid tenantId, CancellationToken ct = default)
     {
         var cacheKey = $"rbac:{tenantId}:{userId}:all";
-        var cached = await cache.GetStringAsync(cacheKey, ct);
-        if (cached is not null)
-            return JsonSerializer.Deserialize<List<string>>(cached)!;
+        try
+        {
+            var cached = await cache.GetStringAsync(cacheKey, ct);
+            if (cached is not null)
+                return JsonSerializer.Deserialize<List<string>>(cached)!;
+        }
+        catch (Exception ex) { logger.LogWarning(ex, "Redis unavailable — GetPermissionsAsync falling back to DB"); }
 
         var permissions = await db.Set<RolePermission>()
             .Where(rp => rp.Role.TenantId == tenantId && rp.Role.Users.Any(u => u.Id == userId))
@@ -539,11 +757,15 @@ public class RbacService(IDistributedCache cache, DbContext db)
             .Distinct()
             .ToListAsync(ct);
 
-        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(permissions),
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }, ct);
+        try { await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(permissions), CacheTtl, ct); }
+        catch { /* Redis down — result still correct, just not cached */ }
+
         return permissions;
     }
 
     public async Task InvalidateUserCacheAsync(Guid userId, Guid tenantId, CancellationToken ct = default)
-        => await cache.RemoveAsync($"rbac:{tenantId}:{userId}:all", ct);
+    {
+        try { await cache.RemoveAsync($"rbac:{tenantId}:{userId}:all", ct); }
+        catch (Exception ex) { logger.LogWarning(ex, "Redis unavailable — cache invalidation skipped for user {UserId}", userId); }
+    }
 }
