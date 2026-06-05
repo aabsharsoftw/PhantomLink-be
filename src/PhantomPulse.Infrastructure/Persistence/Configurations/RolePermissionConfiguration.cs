@@ -8,7 +8,6 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
 {
     public void Configure(EntityTypeBuilder<RolePermission> b)
     {
-        b.ToTable("role_permissions");
         b.HasKey(rp => new { rp.RoleId, rp.PermissionId });
 
         b.HasOne(rp => rp.Role)

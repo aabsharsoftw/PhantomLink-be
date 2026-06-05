@@ -48,9 +48,9 @@ public class MessagingService(DbContext db, ITenantContext tenant, IHttpClientFa
     private async Task PersistAsync(string phone, string body, string direction, CancellationToken ct)
     {
         var conv = await db.Set<Conversation>().FirstOrDefaultAsync(c => c.WaPhoneNumber == phone, ct);
-        if (conv is null) { conv = new Conversation { TenantId = tenant.TenantId, WaPhoneNumber = phone }; db.Set<Conversation>().Add(conv); }
+        if (conv is null) { conv = new Conversation { TenantId = tenant.TenantId!.Value, WaPhoneNumber = phone }; db.Set<Conversation>().Add(conv); }
         conv.LastMessageAt = DateTime.UtcNow;
-        db.Set<Message>().Add(new Message { TenantId = tenant.TenantId, ConversationId = conv.Id, Body = body, Direction = direction });
+        db.Set<Message>().Add(new Message { TenantId = tenant.TenantId!.Value, ConversationId = conv.Id, Body = body, Direction = direction });
         await db.SaveChangesAsync(ct);
     }
 }

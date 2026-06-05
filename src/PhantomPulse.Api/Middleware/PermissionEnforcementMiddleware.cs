@@ -1,3 +1,4 @@
+using PhantomPulse.Foundation.Services;
 using PhantomPulse.SharedKernel.Contracts;
 using PhantomPulse.SharedKernel.Domain;
 
@@ -5,7 +6,7 @@ namespace PhantomPulse.Api.Middleware;
 
 public sealed class PermissionEnforcementMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, ICurrentUser currentUser)
+    public async Task InvokeAsync(HttpContext context, ICurrentUser currentUser, RbacService rbac)
     {
         var endpoint = context.GetEndpoint();
         if (endpoint is null) { await next(context); return; }
@@ -28,13 +29,15 @@ public sealed class PermissionEnforcementMiddleware(RequestDelegate next)
             return;
         }
 
-        if (string.Equals(currentUser.Role, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
+        // Platform scope and SuperAdmin role have unrestricted access
+        if (currentUser.Scope == UserScope.Platform ||
+            string.Equals(currentUser.Role, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
         {
             await next(context);
             return;
         }
 
-        if (currentUser.TenantId == Guid.Empty)
+        if (currentUser.TenantId is null)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(
@@ -43,9 +46,12 @@ public sealed class PermissionEnforcementMiddleware(RequestDelegate next)
             return;
         }
 
+        var ct = context.RequestAborted;
+        var userPerms = await rbac.GetPermissionsAsync(currentUser.UserId, currentUser.TenantId.Value, ct);
+
         foreach (var attr in required)
         {
-            if (!currentUser.HasPermission(attr.Permission))
+            if (!userPerms.Contains(attr.Permission))
             {
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 await context.Response.WriteAsJsonAsync(ApiResponse<object>.Fail(

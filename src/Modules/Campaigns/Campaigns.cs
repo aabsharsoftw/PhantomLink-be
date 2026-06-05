@@ -14,7 +14,7 @@ namespace PhantomPulse.Campaigns.Services
 
         public async Task<Campaign> CreateAsync(string name, string channel, string content, string audience, DateTime? scheduledAt, CancellationToken ct = default)
         {
-            var c = new Campaign { TenantId = tenant.TenantId, Name = name, Channel = channel, Content = content, Audience = audience, ScheduledAt = scheduledAt };
+            var c = new Campaign { TenantId = tenant.TenantId!.Value, Name = name, Channel = channel, Content = content, Audience = audience, ScheduledAt = scheduledAt };
             db.Set<Campaign>().Add(c); await db.SaveChangesAsync(ct);
             if (scheduledAt is null) BackgroundJob.Enqueue<CampaignSendJob>(x => x.SendAsync(c.Id));
             else BackgroundJob.Schedule<CampaignSendJob>(x => x.SendAsync(c.Id), scheduledAt.Value - DateTime.UtcNow);

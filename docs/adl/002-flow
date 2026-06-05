@@ -1,0 +1,16 @@
+PhantomPulse — a white-label SaaS platform (GoHighLevel-style)
+
+PhantomPulse (Platform)
+└── Agency (white-label customer)
+    ├── Agency Owner / Admin
+    └── SubAccount (client business)
+        ├── Account Admin
+        ├── Manager
+        └── User
+
+        What's done:
+
+Entity hierarchy — Agency → SubAccount → User → Role → Permission
+RBAC — Role, Permission, RolePermission with system roles seeded via SystemRoleType
+Multi-tenancy — BaseEntity.TenantId drives EF global query filters, Platform scope bypasses
+Auth plumbing — ITenantContext, TenantMiddleware, ICurrentUser, RefreshToken

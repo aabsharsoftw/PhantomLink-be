@@ -8,15 +8,31 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> b)
     {
-        b.ToTable("users");
         b.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
         b.Property(u => u.LastName).HasMaxLength(100).IsRequired();
         b.Property(u => u.Email).HasMaxLength(256).IsRequired();
         b.Property(u => u.PasswordHash).IsRequired();
         b.Property(u => u.Scope).HasConversion<string>().HasMaxLength(20).IsRequired();
 
-        // Email unique per agency (an email cannot exist twice within the same agency)
+        // Email unique within an agency; covers Agency + SubAccount users.
         b.HasIndex(u => new { u.AgencyId, u.Email }).IsUnique();
+
+        // PostgreSQL treats NULLs as distinct in multi-column indexes, so the index
+        // above does NOT enforce uniqueness when agency_id IS NULL (Platform users).
+        // This filtered index closes that gap.
+        b.HasIndex(u => u.Email)
+            .IsUnique()
+            .HasFilter("agency_id IS NULL");
+
+        // Enforce the scope/hierarchy invariant at the DB layer:
+        //   Platform  → no agency, no sub-account
+        //   Agency    → must have agency, must NOT have sub-account
+        //   SubAccount→ must have both agency and sub-account
+        b.HasCheckConstraint(
+            "ck_users_scope_consistency",
+            "(scope = 'Platform'   AND agency_id IS NULL     AND sub_account_id IS NULL) OR " +
+            "(scope = 'Agency'     AND agency_id IS NOT NULL AND sub_account_id IS NULL) OR " +
+            "(scope = 'SubAccount' AND agency_id IS NOT NULL AND sub_account_id IS NOT NULL)");
 
         b.HasOne(u => u.Agency)
             .WithMany(a => a.Users)

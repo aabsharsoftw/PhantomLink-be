@@ -36,6 +36,14 @@ public class AuthController(AuthService auth) : ControllerBase
         return Ok(ApiResponse<LoginResponse>.Ok(Map(r), "Token refreshed"));
     }
 
+    [AllowAnonymous]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(LogoutRequest req, CancellationToken ct)
+    {
+        await auth.LogoutAsync(req.RefreshToken, ct);
+        return Ok(ApiResponse<object>.Ok(new { }, "Logged out"));
+    }
+
     private static LoginResponse Map(AuthResult r) =>
-        new(r.Token, r.RefreshToken, r.UserId, r.Email, r.Name, r.Role, r.Permissions);
+        new(r.Token, r.RefreshToken, r.UserId, r.Email, r.Name, r.Role, r.AgencyId, r.SubAccountId);
 }

@@ -14,7 +14,7 @@ namespace PhantomPulse.Crm.Controllers;
 [Route("crm/deals")]
 public class DealsController(PipelineService pipeline) : ControllerBase
 {
-    [RequirePermission("leads.view")]
+    [RequirePermission("leadmanagement.view")]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query, CancellationToken ct)
     {
@@ -24,7 +24,7 @@ public class DealsController(PipelineService pipeline) : ControllerBase
         return Ok(ApiResponse<PagedData<DealResponse>>.Ok(page, "Deals fetched"));
     }
 
-    [RequirePermission("leads.manage")]
+    [RequirePermission("leadmanagement.create")]
     [HttpPost]
     public async Task<IActionResult> Create(CreateDealRequest req, CancellationToken ct)
     {
@@ -32,7 +32,7 @@ public class DealsController(PipelineService pipeline) : ControllerBase
         return CreatedAtAction(nameof(GetAll), new { id = d.Id }, ApiResponse<DealResponse>.Ok(MapDeal(d), "Deal created"));
     }
 
-    [RequirePermission("leads.manage")]
+    [RequirePermission("leadmanagement.edit")]
     [HttpPatch("{id:guid}/stage")]
     public async Task<IActionResult> MoveStage(Guid id, MoveStageRequest req, CancellationToken ct)
     {

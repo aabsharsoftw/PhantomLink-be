@@ -22,10 +22,11 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
     {
         var (status, code, message) = ex switch
         {
-            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "unauthorized", "Unauthorized"),
-            KeyNotFoundException => (StatusCodes.Status404NotFound, "not_found", "Resource not found"),
-            ArgumentException => (StatusCodes.Status400BadRequest, "invalid_request", ex.Message),
-            _ => (StatusCodes.Status500InternalServerError, "server_error", "An unexpected error occurred")
+            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized,  "unauthorized",    "Unauthorized"),
+            KeyNotFoundException        => (StatusCodes.Status404NotFound,       "not_found",       "Resource not found"),
+            ArgumentException           => (StatusCodes.Status400BadRequest,     "invalid_request", ex.Message),
+            InvalidOperationException   => (StatusCodes.Status409Conflict,       "conflict",        ex.Message),
+            _                          => (StatusCodes.Status500InternalServerError, "server_error", "An unexpected error occurred")
         };
 
         var payload = ApiResponse<object>.Fail(message, new ApiError(code, ex.Message));

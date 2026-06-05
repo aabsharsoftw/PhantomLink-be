@@ -15,7 +15,7 @@ public static class InfrastructureModule
         var conn  = config.GetConnectionString("Default")!;
         var redis = config.GetConnectionString("Redis")!;
 
-        services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(conn));
+        services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(conn).UseSnakeCaseNamingConvention());
         services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddStackExchangeRedisCache(opt => opt.Configuration = redis);
         services.AddSignalR().AddStackExchangeRedis(redis);

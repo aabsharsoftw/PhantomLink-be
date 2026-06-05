@@ -9,6 +9,7 @@ public static class FoundationModule
     {
         services.AddScoped<AuthService>();
         services.AddScoped<RbacService>();
+        services.AddScoped<UserService>();
         return services;
     }
 }

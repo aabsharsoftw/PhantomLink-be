@@ -13,7 +13,7 @@ namespace PhantomPulse.Campaigns.Controllers;
 [Route("campaigns")]
 public class CampaignsController(CampaignService campaigns) : ControllerBase
 {
-    [RequirePermission("campaigns.view")]
+    [RequirePermission("marketing.view")]
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query, CancellationToken ct)
     {
@@ -23,7 +23,7 @@ public class CampaignsController(CampaignService campaigns) : ControllerBase
         return Ok(ApiResponse<PagedData<CampaignResponse>>.Ok(page, "Campaigns fetched"));
     }
 
-    [RequirePermission("campaigns.create")]
+    [RequirePermission("marketing.create")]
     [HttpPost]
     public async Task<IActionResult> Create(CreateCampaignRequest req, CancellationToken ct)
     {

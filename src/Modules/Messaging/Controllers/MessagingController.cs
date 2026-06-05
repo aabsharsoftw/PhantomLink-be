@@ -14,7 +14,7 @@ namespace PhantomPulse.Messaging.Controllers;
 [Route("messaging")]
 public class MessagingController(MessagingService messaging, IConfiguration config) : ControllerBase
 {
-    [RequirePermission("inbox.reply")]
+    [RequirePermission("conversations.reply")]
     [Authorize]
     [HttpPost("send")]
     public async Task<IActionResult> Send(SendMessageRequest req, CancellationToken ct)

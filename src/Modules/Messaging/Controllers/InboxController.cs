@@ -13,7 +13,7 @@ namespace PhantomPulse.Messaging.Controllers;
 [Route("inbox")]
 public class InboxController(MessagingService messaging) : ControllerBase
 {
-    [RequirePermission("inbox.view")]
+    [RequirePermission("conversations.view")]
     [HttpGet]
     public async Task<IActionResult> Get([FromQuery] string? status, [FromQuery] PaginationQuery query, CancellationToken ct)
     {

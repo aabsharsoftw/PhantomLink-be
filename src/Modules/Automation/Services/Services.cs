@@ -16,7 +16,7 @@ public class AutomationService(DbContext db, ITenantContext tenant) : IAutomatio
 
     public async Task<Workflow> CreateAsync(string name, string trigger, string action, string payload, CancellationToken ct = default)
     {
-        var w = new Workflow { TenantId = tenant.TenantId, Name = name, Trigger = trigger, Action = action, Payload = payload };
+        var w = new Workflow { TenantId = tenant.TenantId!.Value, Name = name, Trigger = trigger, Action = action, Payload = payload };
         db.Set<Workflow>().Add(w);
         await db.SaveChangesAsync(ct);
         return w;

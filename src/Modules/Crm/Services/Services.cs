@@ -20,7 +20,7 @@ public class ContactService(DbContext db, ITenantContext tenant) : IContactServi
 
     public async Task<Contact> CreateAsync(string firstName, string lastName, string email, string phone, string source, CancellationToken ct = default)
     {
-        var c = new Contact { TenantId = tenant.TenantId, FirstName = firstName, LastName = lastName, Email = email, Phone = phone, Source = source };
+        var c = new Contact { TenantId = tenant.TenantId!.Value, FirstName = firstName, LastName = lastName, Email = email, Phone = phone, Source = source };
         db.Set<Contact>().Add(c);
         await db.SaveChangesAsync(ct);
         return c;
@@ -55,7 +55,7 @@ public class PipelineService(DbContext db, ITenantContext tenant)
 
     public async Task<Deal> CreateAsync(Guid contactId, string title, decimal value, string currency, CancellationToken ct = default)
     {
-        var d = new Deal { TenantId = tenant.TenantId, ContactId = contactId, Title = title, Value = value, Currency = currency };
+        var d = new Deal { TenantId = tenant.TenantId!.Value, ContactId = contactId, Title = title, Value = value, Currency = currency };
         db.Set<Deal>().Add(d);
         await db.SaveChangesAsync(ct);
         return d;

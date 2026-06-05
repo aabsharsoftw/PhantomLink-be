@@ -14,7 +14,7 @@ namespace PhantomPulse.Automation.Controllers;
 [Route("automation")]
 public class AutomationController(AutomationService automation) : ControllerBase
 {
-    [RequirePermission("workflows.view")]
+    [RequirePermission("automation.view")]
     [HttpGet("workflows")]
     public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query, CancellationToken ct)
     {
@@ -24,7 +24,7 @@ public class AutomationController(AutomationService automation) : ControllerBase
         return Ok(ApiResponse<PagedData<WorkflowResponse>>.Ok(page, "Workflows fetched"));
     }
 
-    [RequirePermission("workflows.create")]
+    [RequirePermission("automation.create")]
     [HttpPost("workflows")]
     public async Task<IActionResult> Create(CreateWorkflowRequest req, CancellationToken ct)
     {
@@ -32,7 +32,7 @@ public class AutomationController(AutomationService automation) : ControllerBase
         return CreatedAtAction(nameof(GetAll), new { id = w.Id }, ApiResponse<WorkflowResponse>.Ok(MapWorkflow(w), "Workflow created"));
     }
 
-    [RequirePermission("workflows.execute")]
+    [RequirePermission("automation.execute")]
     [HttpPost("trigger")]
     public async Task<IActionResult> Trigger(TriggerRequest req, CancellationToken ct)
     {

@@ -11,7 +11,7 @@ public class ContactLeakTests
     private static AppDbContext BuildDb(Guid tenantId)
     {
         var tenant = new TenantContext();
-        tenant.Set(tenantId);
+        tenant.Set(UserScope.SubAccount, tenantId);
         var opts = new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         return new AppDbContext(opts, tenant);
     }
