@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace PhantomPulse.Infrastructure.Persistence.Migrations
+namespace PhantomPulse.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -90,8 +90,15 @@ namespace PhantomPulse.Infrastructure.Persistence.Migrations
                     email = table.Column<string>(type: "text", nullable: false),
                     phone = table.Column<string>(type: "text", nullable: false),
                     company = table.Column<string>(type: "text", nullable: false),
+                    title = table.Column<string>(type: "text", nullable: false),
                     source = table.Column<string>(type: "text", nullable: false),
                     tags = table.Column<string[]>(type: "text[]", nullable: false),
+                    score = table.Column<int>(type: "integer", nullable: false),
+                    status = table.Column<string>(type: "text", nullable: false),
+                    notes = table.Column<string>(type: "text", nullable: false),
+                    owner_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    owner_name = table.Column<string>(type: "text", nullable: false),
+                    last_activity_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     custom_fields = table.Column<Dictionary<string, object>>(type: "jsonb", nullable: false),
                     tenant_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

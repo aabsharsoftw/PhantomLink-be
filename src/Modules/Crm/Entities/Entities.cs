@@ -4,13 +4,20 @@ namespace PhantomPulse.Crm.Entities;
 
 public class Contact : BaseEntity
 {
-    public string FirstName { get; set; } = "";
-    public string LastName  { get; set; } = "";
-    public string Email     { get; set; } = "";
-    public string Phone     { get; set; } = "";
-    public string Company   { get; set; } = "";
-    public string Source    { get; set; } = "manual";
-    public string[] Tags    { get; set; } = [];
+    public string FirstName        { get; set; } = "";
+    public string LastName         { get; set; } = "";
+    public string Email            { get; set; } = "";
+    public string Phone            { get; set; } = "";
+    public string Company          { get; set; } = "";
+    public string Title            { get; set; } = "";
+    public string Source           { get; set; } = "manual";
+    public string[] Tags           { get; set; } = [];
+    public int    Score            { get; set; } = 50;
+    public string Status           { get; set; } = "open";  // open | won | lost | churned
+    public string Notes            { get; set; } = "";
+    public Guid?  OwnerId          { get; set; }
+    public string OwnerName        { get; set; } = "";
+    public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
     public Dictionary<string, object?> CustomFields { get; set; } = new();
     public ICollection<Deal> Deals { get; set; } = [];
 }

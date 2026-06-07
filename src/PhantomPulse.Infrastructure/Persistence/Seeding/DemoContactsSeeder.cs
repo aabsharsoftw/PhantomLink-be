@@ -17,27 +17,27 @@ internal sealed class DemoContactsSeeder(
     ILogger<DemoContactsSeeder> logger) : IDataSeeder
 {
     // Fixed IDs — never change once deployed
-    private static readonly Guid PhantomCoreAgencyId  = new("cccccccc-0001-0000-0000-000000000000");
-    private static readonly Guid PcAgencyOwnerRoleId  = new("cccccccc-0002-0000-0000-000000000000");
-    private static readonly Guid PcAgencyAdminRoleId  = new("cccccccc-0003-0000-0000-000000000000");
+    private static readonly Guid PhantomCoreAgencyId = new("cccccccc-0001-0000-0000-000000000000");
+    private static readonly Guid PcAgencyOwnerRoleId = new("cccccccc-0002-0000-0000-000000000000");
+    private static readonly Guid PcAgencyAdminRoleId = new("cccccccc-0003-0000-0000-000000000000");
 
     private static readonly Guid SubPhantomCoreId = new("cccccccc-0010-0000-0000-000000000000");
-    private static readonly Guid SubScentivoId    = new("cccccccc-0011-0000-0000-000000000000");
-    private static readonly Guid SubFalhoutId     = new("cccccccc-0012-0000-0000-000000000000");
-    private static readonly Guid SubCharmeId      = new("cccccccc-0013-0000-0000-000000000000");
-    private static readonly Guid SubSmartGateId   = new("cccccccc-0014-0000-0000-000000000000");
-    private static readonly Guid SubRkGlobalId    = new("cccccccc-0015-0000-0000-000000000000");
+    private static readonly Guid SubScentivoId = new("cccccccc-0011-0000-0000-000000000000");
+    private static readonly Guid SubFalhoutId = new("cccccccc-0012-0000-0000-000000000000");
+    private static readonly Guid SubCharmeId = new("cccccccc-0013-0000-0000-000000000000");
+    private static readonly Guid SubSmartGateId = new("cccccccc-0014-0000-0000-000000000000");
+    private static readonly Guid SubRkGlobalId = new("cccccccc-0015-0000-0000-000000000000");
 
-    private static readonly Guid UserDaanyaalId   = new("cccccccc-0020-0000-0000-000000000000");
-    private static readonly Guid UserAbsharId     = new("cccccccc-0021-0000-0000-000000000000");
-    private static readonly Guid UserReemId       = new("cccccccc-0022-0000-0000-000000000000");
-    private static readonly Guid UserAliId        = new("cccccccc-0023-0000-0000-000000000000");
-    private static readonly Guid UserReshmaId     = new("cccccccc-0024-0000-0000-000000000000");
-    private static readonly Guid UserFalhoutId    = new("cccccccc-0025-0000-0000-000000000000");
-    private static readonly Guid UserKhouloudId   = new("cccccccc-0026-0000-0000-000000000000");
-    private static readonly Guid UserGhazalId     = new("cccccccc-0027-0000-0000-000000000000");
-    private static readonly Guid UserRupeshId     = new("cccccccc-0028-0000-0000-000000000000");
-    private static readonly Guid UserSajanId      = new("cccccccc-0029-0000-0000-000000000000");
+    private static readonly Guid UserDaanyaalId = new("cccccccc-0020-0000-0000-000000000000");
+    private static readonly Guid UserAbsharId = new("cccccccc-0021-0000-0000-000000000000");
+    private static readonly Guid UserReemId = new("cccccccc-0022-0000-0000-000000000000");
+    private static readonly Guid UserAliId = new("cccccccc-0023-0000-0000-000000000000");
+    private static readonly Guid UserReshmaId = new("cccccccc-0024-0000-0000-000000000000");
+    private static readonly Guid UserFalhoutId = new("cccccccc-0025-0000-0000-000000000000");
+    private static readonly Guid UserKhouloudId = new("cccccccc-0026-0000-0000-000000000000");
+    private static readonly Guid UserGhazalId = new("cccccccc-0027-0000-0000-000000000000");
+    private static readonly Guid UserRupeshId = new("cccccccc-0028-0000-0000-000000000000");
+    private static readonly Guid UserSajanId = new("cccccccc-0029-0000-0000-000000000000");
 
     private static readonly (Guid Id, string Name, string Slug)[] SubAccounts =
     [
@@ -59,9 +59,9 @@ internal sealed class DemoContactsSeeder(
         {
             db.Set<Agency>().Add(new Agency
             {
-                Id       = PhantomCoreAgencyId,
-                Name     = "PHANTOM CORE TECHNOLOGIES L.L.C S.O.C",
-                Slug     = "phantom-core-technologies",
+                Id = PhantomCoreAgencyId,
+                Name = "PHANTOM CORE TECHNOLOGIES L.L.C S.O.C",
+                Slug = "phantom-core-technologies",
                 IsActive = true,
             });
             await db.SaveChangesAsync(ct);
@@ -87,10 +87,10 @@ internal sealed class DemoContactsSeeder(
             {
                 db.Set<SubAccount>().Add(new SubAccount
                 {
-                    Id       = id,
+                    Id = id,
                     AgencyId = PhantomCoreAgencyId,
-                    Name     = name,
-                    Slug     = slug,
+                    Name = name,
+                    Slug = slug,
                     IsActive = true,
                 });
                 tier2Pending = true;
@@ -134,14 +134,14 @@ internal sealed class DemoContactsSeeder(
             PcAgencyAdminRoleId, defaultPwd, ct);
 
         // Sub-account users
-        await TrackUserIfMissingAsync(UserReemId,     SubPhantomCoreId, UserScope.SubAccount, "Reem",    "Zulfiqar",       "reemzulfiqar10@gmail.com",    "+91 98978 22707",  adminRoleBySubAccount[SubPhantomCoreId], defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserAliId,      SubScentivoId,    UserScope.SubAccount, "Ali",     "Shaikh",         "alishaikh2049@gmail.com",     "+971 50 518 2983", adminRoleBySubAccount[SubScentivoId],    defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserReshmaId,   SubScentivoId,    UserScope.SubAccount, "Reshma",  "Kadam",          "info@scentivoglobal.com",     "+971 56 602 0318", adminRoleBySubAccount[SubScentivoId],    defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserFalhoutId,  SubFalhoutId,     UserScope.SubAccount, "Dr",      "Falhout Dental", "drfalhoutcrm@gmail.com",      "+971 54 446 2121", adminRoleBySubAccount[SubFalhoutId],     defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserKhouloudId, SubFalhoutId,     UserScope.SubAccount, "Khouloud","Sehli",          "Khoulouudsehli@gmail.com",    "+971 56 737 1792", adminRoleBySubAccount[SubFalhoutId],     defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserGhazalId,   SubCharmeId,      UserScope.SubAccount, "Ghazal",  "Charme",         "charmemedical@gmail.com",     "+971 56 408 0348", adminRoleBySubAccount[SubCharmeId],      defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserRupeshId,   SubSmartGateId,   UserScope.SubAccount, "Rupesh",  "Singh",          "rupesh@smartgatellc.com",     "",                 adminRoleBySubAccount[SubSmartGateId],   defaultPwd, ct);
-        await TrackUserIfMissingAsync(UserSajanId,    SubRkGlobalId,    UserScope.SubAccount, "Sajan",   "Bhatia",         "info@rkglobalimmigration.com","+971 56 415 8163", adminRoleBySubAccount[SubRkGlobalId],    defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserReemId, SubPhantomCoreId, UserScope.SubAccount, "Reem", "Zulfiqar", "reemzulfiqar10@gmail.com", "+91 98978 22707", adminRoleBySubAccount[SubPhantomCoreId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserAliId, SubScentivoId, UserScope.SubAccount, "Ali", "Shaikh", "alishaikh2049@gmail.com", "+971 50 518 2983", adminRoleBySubAccount[SubScentivoId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserReshmaId, SubScentivoId, UserScope.SubAccount, "Reshma", "Kadam", "info@scentivoglobal.com", "+971 56 602 0318", adminRoleBySubAccount[SubScentivoId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserFalhoutId, SubFalhoutId, UserScope.SubAccount, "Dr", "Falhout Dental", "drfalhoutcrm@gmail.com", "+971 54 446 2121", adminRoleBySubAccount[SubFalhoutId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserKhouloudId, SubFalhoutId, UserScope.SubAccount, "Khouloud", "Sehli", "Khoulouudsehli@gmail.com", "+971 56 737 1792", adminRoleBySubAccount[SubFalhoutId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserGhazalId, SubCharmeId, UserScope.SubAccount, "Ghazal", "Charme", "charmemedical@gmail.com", "+971 56 408 0348", adminRoleBySubAccount[SubCharmeId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserRupeshId, SubSmartGateId, UserScope.SubAccount, "Rupesh", "Singh", "rupesh@smartgatellc.com", "", adminRoleBySubAccount[SubSmartGateId], defaultPwd, ct);
+        await TrackUserIfMissingAsync(UserSajanId, SubRkGlobalId, UserScope.SubAccount, "Sajan", "Bhatia", "info@rkglobalimmigration.com", "+971 56 415 8163", adminRoleBySubAccount[SubRkGlobalId], defaultPwd, ct);
 
         await db.SaveChangesAsync(ct);
     }
@@ -156,12 +156,12 @@ internal sealed class DemoContactsSeeder(
 
         db.Set<Role>().Add(new Role
         {
-            Id             = id,
-            TenantId       = PhantomCoreAgencyId,
-            Name           = name,
-            Description    = desc,
-            IsSystem       = true,
-            Scope          = RoleScope.Agency,
+            Id = id,
+            TenantId = PhantomCoreAgencyId,
+            Name = name,
+            Description = desc,
+            IsSystem = true,
+            Scope = RoleScope.Agency,
             SystemRoleType = type,
         });
         db.Set<RolePermission>().AddRange(
@@ -179,18 +179,18 @@ internal sealed class DemoContactsSeeder(
 
         db.Set<User>().Add(new User
         {
-            Id           = id,
-            TenantId     = scope == UserScope.SubAccount ? subAccountId!.Value : PhantomCoreAgencyId,
-            Scope        = scope,
-            AgencyId     = PhantomCoreAgencyId,
+            Id = id,
+            TenantId = scope == UserScope.SubAccount ? subAccountId!.Value : PhantomCoreAgencyId,
+            Scope = scope,
+            AgencyId = PhantomCoreAgencyId,
             SubAccountId = subAccountId,
-            FirstName    = firstName,
-            LastName     = lastName,
-            Email        = email,
-            Phone        = string.IsNullOrEmpty(phone) ? null : phone,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email,
+            Phone = string.IsNullOrEmpty(phone) ? null : phone,
             PasswordHash = passwordHash,
-            RoleId       = roleId,
-            IsActive     = true,
+            RoleId = roleId,
+            IsActive = true,
         });
     }
 }

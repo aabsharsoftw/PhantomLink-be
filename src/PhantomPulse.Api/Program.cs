@@ -10,7 +10,6 @@ using PhantomPulse.Crm;
 using PhantomPulse.Foundation;
 using PhantomPulse.Infrastructure;
 using PhantomPulse.Infrastructure.Persistence.Seeding;
-using PhantomPulse.Infrastructure.Realtime;
 using PhantomPulse.Messaging;
 using PhantomPulse.SharedKernel.Domain;
 using Serilog;
@@ -56,15 +55,6 @@ builder.Services.AddCrmModule();
 builder.Services.AddMessagingModule(builder.Configuration);
 builder.Services.AddAutomationModule();
 builder.Services.AddCampaignsModule(builder.Configuration);
-
-// Phase 2 (uncomment when ready)
-// builder.Services.AddSocialModule();
-// builder.Services.AddPaymentsModule(builder.Configuration);
-
-// Phase 3 (uncomment when ready)
-// builder.Services.AddAdminModule();
-// builder.Services.AddWhiteLabelModule();
-// builder.Services.AddTelephonyModule();
 
 builder.Services.AddCors(opt => opt.AddDefaultPolicy(p => p
     .WithOrigins(
@@ -115,7 +105,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 app.MapHangfireDashboard("/jobs");
-app.MapHub<InboxHub>("/hubs/inbox");
 
 app.Run();
 

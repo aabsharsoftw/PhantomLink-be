@@ -17,7 +17,7 @@ using System.Text.Json;
 
 namespace PhantomPulse.Foundation.Services;
 
-public class AuthService(DbContext db, IConfiguration config, IRolePermissionProvider permissionProvider, RbacService rbac)
+public class AuthService(DbContext db, IConfiguration config, IRolePermissionProvider permissionProvider, RbacService rbac, ITenantProvisioner provisioner)
 {
     public async Task<AuthResult> LoginAsync(string email, string password, CancellationToken ct = default)
     {
@@ -112,6 +112,7 @@ public class AuthService(DbContext db, IConfiguration config, IRolePermissionPro
         await db.SaveChangesAsync(ct);
 
         await SubAccountProvisioner.EnsureRolesAsync(db, subAccountId, permissionProvider, ct);
+        await provisioner.ProvisionAsync(agencyId, subAccountId, user.Id, name.Trim(), ct);
 
         return new AuthResult(GenerateToken(user, ownerRole.Name), rt.Token, user.Id, user.Email,
             name.Trim(), ownerRole.Name, agencyId, null);

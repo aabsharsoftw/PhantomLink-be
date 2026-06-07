@@ -47,19 +47,17 @@
     "contacts.delete",
 
     "conversations.view",
-    "conversations.create",
-    "conversations.edit",
-    "conversations.delete",
+    "conversations.reply",
 
     "telephony.view",
     "telephony.create",
     "telephony.edit",
     "telephony.delete",
 
-    "lead_management.view",
-    "lead_management.create",
-    "lead_management.edit",
-    "lead_management.delete",
+    "leadmanagement.view",
+    "leadmanagement.create",
+    "leadmanagement.edit",
+    "leadmanagement.delete",
 
     "calendars.view",
     "calendars.create",
@@ -71,37 +69,41 @@
     "marketing.edit",
     "marketing.delete",
 
-    "ai_automation.view",
-    "ai_automation.create",
-    "ai_automation.edit",
-    "ai_automation.execute",
-    "ai_automation.delete",
+    "automation.view",
+    "automation.create",
+    "automation.execute",
 
-    "ai_agents.view",
-    "ai_agents.create",
-    "ai_agents.edit",
-    "ai_agents.delete",
+    "aiagents.view",
+    "aiagents.create",
+    "aiagents.edit",
+    "aiagents.delete",
 
     "templates.view",
     "templates.create",
     "templates.edit",
     "templates.delete",
 
-    "social_planner.view",
-    "social_planner.create",
-    "social_planner.edit",
-    "social_planner.delete",
+    "social.view",
+    "social.create",
+    "social.edit",
+    "social.delete",
 
     "reputation.view",
     "reputation.manage",
 
-    "intelligence.view",
-
     "reporting.view",
 
-    "agency_view.view",
-
     "settings.view",
+    "settings.manage",
+
+    "users.view",
+    "users.create",
+    "users.edit",
+    "users.delete",
+
+    "intelligence.view",
+
+    "agency_view.view",
 
     "business_profile.view",
     "business_profile.edit",
@@ -113,11 +115,6 @@
     "team_roles.create",
     "team_roles.edit",
     "team_roles.delete",
-
-    "users.view",
-    "users.create",
-    "users.edit",
-    "users.delete",
 
     "billing_plan.view",
     "billing_plan.manage",
@@ -173,19 +170,17 @@
       "contacts.delete",
 
       "conversations.view",
-      "conversations.create",
-      "conversations.edit",
-      "conversations.delete",
+      "conversations.reply",
 
       "telephony.view",
       "telephony.create",
       "telephony.edit",
       "telephony.delete",
 
-      "lead_management.view",
-      "lead_management.create",
-      "lead_management.edit",
-      "lead_management.delete",
+      "leadmanagement.view",
+      "leadmanagement.create",
+      "leadmanagement.edit",
+      "leadmanagement.delete",
 
       "calendars.view",
       "calendars.create",
@@ -197,37 +192,36 @@
       "marketing.edit",
       "marketing.delete",
 
-      "ai_automation.view",
-      "ai_automation.create",
-      "ai_automation.edit",
-      "ai_automation.execute",
-      "ai_automation.delete",
+      "automation.view",
+      "automation.create",
+      "automation.execute",
 
-      "ai_agents.view",
-      "ai_agents.create",
-      "ai_agents.edit",
-      "ai_agents.delete",
+      "aiagents.view",
+      "aiagents.create",
+      "aiagents.edit",
+      "aiagents.delete",
 
       "templates.view",
       "templates.create",
       "templates.edit",
       "templates.delete",
 
-      "social_planner.view",
-      "social_planner.create",
-      "social_planner.edit",
-      "social_planner.delete",
+      "social.view",
+      "social.create",
+      "social.edit",
+      "social.delete",
 
       "reputation.view",
       "reputation.manage",
 
-      "intelligence.view",
-
       "reporting.view",
+
+      "intelligence.view",
 
       "agency_view.view",
 
       "settings.view",
+      "settings.manage",
 
       "business_profile.view",
       "business_profile.edit",
@@ -298,19 +292,17 @@
       "contacts.delete",
 
       "conversations.view",
-      "conversations.create",
-      "conversations.edit",
-      "conversations.delete",
+      "conversations.reply",
 
       "telephony.view",
       "telephony.create",
       "telephony.edit",
       "telephony.delete",
 
-      "lead_management.view",
-      "lead_management.create",
-      "lead_management.edit",
-      "lead_management.delete",
+      "leadmanagement.view",
+      "leadmanagement.create",
+      "leadmanagement.edit",
+      "leadmanagement.delete",
 
       "calendars.view",
       "calendars.create",
@@ -322,37 +314,36 @@
       "marketing.edit",
       "marketing.delete",
 
-      "ai_automation.view",
-      "ai_automation.create",
-      "ai_automation.edit",
-      "ai_automation.execute",
-      "ai_automation.delete",
+      "automation.view",
+      "automation.create",
+      "automation.execute",
 
-      "ai_agents.view",
-      "ai_agents.create",
-      "ai_agents.edit",
-      "ai_agents.delete",
+      "aiagents.view",
+      "aiagents.create",
+      "aiagents.edit",
+      "aiagents.delete",
 
       "templates.view",
       "templates.create",
       "templates.edit",
       "templates.delete",
 
-      "social_planner.view",
-      "social_planner.create",
-      "social_planner.edit",
-      "social_planner.delete",
+      "social.view",
+      "social.create",
+      "social.edit",
+      "social.delete",
 
       "reputation.view",
       "reputation.manage",
 
-      "intelligence.view",
-
       "reporting.view",
+
+      "intelligence.view",
 
       "agency_view.view",
 
       "settings.view",
+      "settings.manage",
 
       "business_profile.view",
       "business_profile.edit",
@@ -423,19 +414,17 @@
       "contacts.delete",
 
       "conversations.view",
-      "conversations.create",
-      "conversations.edit",
-      "conversations.delete",
+      "conversations.reply",
 
       "telephony.view",
       "telephony.create",
       "telephony.edit",
       "telephony.delete",
 
-      "lead_management.view",
-      "lead_management.create",
-      "lead_management.edit",
-      "lead_management.delete",
+      "leadmanagement.view",
+      "leadmanagement.create",
+      "leadmanagement.edit",
+      "leadmanagement.delete",
 
       "calendars.view",
       "calendars.create",
@@ -447,37 +436,36 @@
       "marketing.edit",
       "marketing.delete",
 
-      "ai_automation.view",
-      "ai_automation.create",
-      "ai_automation.edit",
-      "ai_automation.execute",
-      "ai_automation.delete",
+      "automation.view",
+      "automation.create",
+      "automation.execute",
 
-      "ai_agents.view",
-      "ai_agents.create",
-      "ai_agents.edit",
-      "ai_agents.delete",
+      "aiagents.view",
+      "aiagents.create",
+      "aiagents.edit",
+      "aiagents.delete",
 
       "templates.view",
       "templates.create",
       "templates.edit",
       "templates.delete",
 
-      "social_planner.view",
-      "social_planner.create",
-      "social_planner.edit",
-      "social_planner.delete",
+      "social.view",
+      "social.create",
+      "social.edit",
+      "social.delete",
 
       "reputation.view",
       "reputation.manage",
 
-      "intelligence.view",
-
       "reporting.view",
+
+      "intelligence.view",
 
       "agency_view.view",
 
       "settings.view",
+      "settings.manage",
 
       "business_profile.view",
       "business_profile.edit",
@@ -532,19 +520,17 @@
       "contacts.delete",
 
       "conversations.view",
-      "conversations.create",
-      "conversations.edit",
-      "conversations.delete",
+      "conversations.reply",
 
       "telephony.view",
       "telephony.create",
       "telephony.edit",
       "telephony.delete",
 
-      "lead_management.view",
-      "lead_management.create",
-      "lead_management.edit",
-      "lead_management.delete",
+      "leadmanagement.view",
+      "leadmanagement.create",
+      "leadmanagement.edit",
+      "leadmanagement.delete",
 
       "calendars.view",
       "calendars.create",
@@ -556,34 +542,33 @@
       "marketing.edit",
       "marketing.delete",
 
-      "ai_automation.view",
-      "ai_automation.create",
-      "ai_automation.edit",
-      "ai_automation.execute",
-      "ai_automation.delete",
+      "automation.view",
+      "automation.create",
+      "automation.execute",
 
-      "ai_agents.view",
-      "ai_agents.create",
-      "ai_agents.edit",
-      "ai_agents.delete",
+      "aiagents.view",
+      "aiagents.create",
+      "aiagents.edit",
+      "aiagents.delete",
 
       "templates.view",
       "templates.create",
       "templates.edit",
       "templates.delete",
 
-      "social_planner.view",
-      "social_planner.create",
-      "social_planner.edit",
-      "social_planner.delete",
+      "social.view",
+      "social.create",
+      "social.edit",
+      "social.delete",
 
       "reputation.view",
 
-      "intelligence.view",
-
       "reporting.view",
 
+      "intelligence.view",
+
       "settings.view",
+      "settings.manage",
 
       "business_profile.view",
       "business_profile.edit",
@@ -637,15 +622,14 @@
       "contacts.edit",
 
       "conversations.view",
-      "conversations.create",
-      "conversations.edit",
+      "conversations.reply",
 
       "telephony.view",
       "telephony.create",
 
-      "lead_management.view",
-      "lead_management.create",
-      "lead_management.edit",
+      "leadmanagement.view",
+      "leadmanagement.create",
+      "leadmanagement.edit",
 
       "calendars.view",
       "calendars.create",
@@ -659,7 +643,11 @@
 
       "reporting.view",
 
-      "intelligence.view"
+      "intelligence.view",
+
+      "pipelines_stages.view",
+
+      "tags_segments.view"
     ],
 
     "User": [
@@ -668,13 +656,17 @@
       "contacts.view",
 
       "conversations.view",
-      "conversations.create",
+      "conversations.reply",
 
       "telephony.view",
 
-      "lead_management.view",
+      "leadmanagement.view",
 
-      "calendars.view"
+      "calendars.view",
+
+      "pipelines_stages.view",
+
+      "tags_segments.view"
     ]
   }
 }

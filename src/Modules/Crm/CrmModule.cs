@@ -10,6 +10,7 @@ public static class CrmModule
     {
         services.AddScoped<ContactService>();
         services.AddScoped<PipelineService>();
+        services.AddScoped<LeadService>();
         services.AddScoped<IContactService, ContactService>();
         return services;
     }

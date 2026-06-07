@@ -18,3 +18,12 @@ public interface IAutomationTrigger
 {
     Task FireAsync(string triggerKey, Guid? contactId, Dictionary<string, string>? context = null, CancellationToken ct = default);
 }
+
+/// <summary>
+/// Seeds the initial CRM data (sample contacts, leads, deals) for a freshly created tenant.
+/// Implemented in Infrastructure so it can reach CRM entities without a Foundation→CRM dependency.
+/// </summary>
+public interface ITenantProvisioner
+{
+    Task ProvisionAsync(Guid agencyId, Guid subAccountId, Guid ownerUserId, string ownerName, CancellationToken ct = default);
+}

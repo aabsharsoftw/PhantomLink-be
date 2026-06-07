@@ -10,11 +10,13 @@
     <!-- Newtonsoft.Json pinned to 13.0.3 to override the vulnerable 11.0.1 brought in by Hangfire.AspNetCore -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <!-- Entity Framework Core -->
-    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.2" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
+<PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.2" />
+<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2" />
+<PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.2" />
+<PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
+<PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+	  <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <!-- Hangfire -->
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.23" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />

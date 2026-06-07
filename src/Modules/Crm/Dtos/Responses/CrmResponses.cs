@@ -22,3 +22,24 @@ public sealed record DealResponse(
     string Priority,
     DateTime CreatedAt,
     DateTime UpdatedAt);
+
+// ── Lead response (superset of ContactResponse, includes CRM lead fields) ─────
+
+public sealed record LeadResponse(
+    Guid     Id,
+    string   FirstName,
+    string   LastName,
+    string   Name,
+    string   Email,
+    string   Phone,
+    string   Company,
+    string   Title,
+    string[] Tags,
+    string   Owner,
+    string   OwnerInitials,
+    string   Source,
+    int      Score,
+    string   Status,
+    string   Notes,
+    DateTime CreatedAt,
+    DateTime LastActivityAt);

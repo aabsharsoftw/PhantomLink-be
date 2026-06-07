@@ -4,8 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using PhantomPulse.Automation.Entities;
 using PhantomPulse.SharedKernel.Contracts;
 using PhantomPulse.SharedKernel.Domain;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Linq;
 
 namespace PhantomPulse.Automation.Services;
@@ -48,12 +46,6 @@ public class WorkflowExecutionJob(DbContext db, IMessagingService messaging, ICo
             case "update_field":
                 if (contactId.HasValue)
                     await contacts.UpdateFieldAsync(contactId.Value, opts["field"], Resolve(opts["value"], ctx));
-                break;
-            case "webhook":
-                {
-                    using var http = new HttpClient();
-                    await http.PostAsJsonAsync(opts["url"], new { workflowId, contactId, context = ctx });
-                }
                 break;
         }
     }

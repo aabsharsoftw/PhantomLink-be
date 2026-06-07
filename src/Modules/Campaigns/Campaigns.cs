@@ -22,15 +22,10 @@ namespace PhantomPulse.Campaigns.Services
         }
     }
 
-    public class CampaignSendJob(DbContext db, IMessagingService messaging)
+    public class CampaignSendJob
     {
-        public async Task SendAsync(Guid campaignId)
-        {
-            var c = await db.Set<Campaign>().FindAsync(new object[] { campaignId }) ?? throw new InvalidOperationException();
-            c.Status = "Sending"; await db.SaveChangesAsync();
-            // TODO: resolve audience to contact list and send per contact
-            c.Status = "Sent"; c.UpdatedAt = DateTime.UtcNow; await db.SaveChangesAsync();
-        }
+        public Task SendAsync(Guid campaignId) =>
+            throw new NotImplementedException("Campaign sending not yet implemented.");
     }
 }
 
