@@ -1,0 +1,7 @@
+postgres-data
+.git
+.gitignore
+bin
+obj
+**/bin
+**/obj
