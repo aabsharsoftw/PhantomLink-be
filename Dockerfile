@@ -1,4 +1,9 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+
+RUN apt-get update && \
+    apt-get install -y libgssapi-krb5-2 && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 EXPOSE 8080
 
@@ -16,6 +21,7 @@ COPY ["src/Modules/Campaigns/PhantomPulse.Campaigns.csproj", "src/Modules/Campai
 RUN dotnet restore "src/PhantomPulse.Api/PhantomPulse.Api.csproj"
 COPY . .
 RUN dotnet publish "src/PhantomPulse.Api/PhantomPulse.Api.csproj" -c Release -o /app/publish
+
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
