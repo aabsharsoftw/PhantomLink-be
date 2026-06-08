@@ -4,6 +4,7 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+COPY ["Directory.Packages.props", "."]
 COPY ["src/PhantomPulse.Api/PhantomPulse.Api.csproj", "src/PhantomPulse.Api/"]
 COPY ["src/PhantomPulse.SharedKernel/PhantomPulse.SharedKernel.csproj", "src/PhantomPulse.SharedKernel/"]
 COPY ["src/PhantomPulse.Infrastructure/PhantomPulse.Infrastructure.csproj", "src/PhantomPulse.Infrastructure/"]
