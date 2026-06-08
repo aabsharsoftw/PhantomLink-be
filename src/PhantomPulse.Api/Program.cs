@@ -14,6 +14,8 @@ using PhantomPulse.Messaging;
 using PhantomPulse.SharedKernel.Domain;
 using Serilog;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using PhantomPulse.Infrastructure.Persistence;
 
 Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateBootstrapLogger();
 
@@ -85,7 +87,11 @@ builder.Services.AddOpenApi(opt =>
 });
 
 var app = builder.Build();
-
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
 await DatabaseSeeder.RunAsync(app.Services);
 
 app.UseSerilogRequestLogging();
