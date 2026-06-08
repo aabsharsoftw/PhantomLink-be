@@ -69,7 +69,8 @@ builder.Services.AddCors(opt => opt.AddDefaultPolicy(p => p
         "http://localhost:5157",
         "http://localhost:5158",
         "http://localhost:3000",
-        "http://localhost:4173")
+        "http://localhost:4173",
+        "http://16.16.104.8:3000")
     .AllowAnyHeader()
     .AllowAnyMethod()
     .AllowCredentials()));
