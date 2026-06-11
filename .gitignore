@@ -1,6 +1,78 @@
+# Visual Studio / IDE
 .vs/
-bin/
-obj/
-
+.vscode/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Build output
+bin/
+obj/
+out/
+build/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# .NET runtime / SDK
+*.dll
+*.exe
+*.pdb
+*.cache
+*.ilk
+*.meta
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.vspscc
+*.vssscc
+
+# ASP.NET / Web
+wwwroot/lib/
+appsettings.Development.json
+appsettings.Local.json
+
+# Publish output
+**/publish/
+PublishProfiles/
+
+# Entity Framework migrations (optional — remove if you version these)
+# Migrations/
+
+# Secrets & environment
+*.env
+*.env.*
+secrets.json
+launchSettings.json
+
+# Test results
+TestResults/
+coverage/
+*.coveragexml
+*.trx
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
