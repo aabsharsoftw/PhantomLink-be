@@ -12,6 +12,7 @@ public static class MessagingModule
         services.AddHttpClient();
         services.AddScoped<MessagingService>();
         services.AddScoped<IMessagingService, MessagingService>();
+        services.AddScoped<TemplateService>();
         return services;
     }
 }

@@ -57,7 +57,6 @@ builder.Services.AddCrmModule();
 builder.Services.AddMessagingModule(builder.Configuration);
 builder.Services.AddAutomationModule();
 builder.Services.AddCampaignsModule(builder.Configuration);
-
 builder.Services.AddCors(opt => opt.AddDefaultPolicy(p => p
     .WithOrigins(
         "http://localhost:5000",

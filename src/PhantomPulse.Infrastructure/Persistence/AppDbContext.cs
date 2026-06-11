@@ -36,6 +36,8 @@ public class AppDbContext(
 
     public DbSet<Campaign> Campaigns => Set<Campaign>();
 
+    public DbSet<MessageTemplate> Templates => Set<MessageTemplate>();
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);

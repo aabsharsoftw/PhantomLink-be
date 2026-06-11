@@ -21,3 +21,14 @@ public class Message : BaseEntity
     public bool   IsInternal     { get; set; } = false;
     public Conversation Conversation { get; set; } = null!;
 }
+
+public class MessageTemplate : BaseEntity
+{
+    public string   Name      { get; set; } = "";
+    public string   Channel   { get; set; } = "WhatsApp"; // WhatsApp | Email | SMS
+    public string   Category  { get; set; } = "Marketing"; // Marketing | Utility | Authentication
+    public string   Status    { get; set; } = "Pending";   // Approved | Pending | Rejected
+    public string   Body      { get; set; } = "";
+    public string[] Variables { get; set; } = [];
+    public int      Usage     { get; set; } = 0;
+}
