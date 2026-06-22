@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PhantomPulse.Crm.Controllers;
 using PhantomPulse.Crm.Dtos.Requests;
 using PhantomPulse.Crm.Dtos.Responses;
 using PhantomPulse.Crm.Entities;
@@ -14,10 +15,7 @@ namespace PhantomPulse.Crm.Controllers;
 [Route("crm/leads")]
 public class LeadsController(LeadService leads, ContactService contacts) : ControllerBase
 {
-    /// <summary>
-    /// List leads with optional search, tag, and status filters.
-    /// GET /api/crm/leads?search=sana&tag=hot-lead&status=open&page=1&pageSize=25
-    /// </summary>
+    /// <summary>GET /api/crm/leads?search=sana&amp;tag=hot-lead&amp;status=open&amp;page=1&amp;pageSize=25</summary>
     [RequirePermission("contacts.view")]
     [HttpGet]
     public async Task<IActionResult> GetAll(
@@ -27,9 +25,9 @@ public class LeadsController(LeadService leads, ContactService contacts) : Contr
         [FromQuery] PaginationQuery query,
         CancellationToken ct)
     {
-        var rows  = await leads.GetLeadsAsync(search, tag, status, ct);
+        var rows   = await leads.GetLeadsAsync(search, tag, status, ct);
         var shaped = rows.Select(MapLead).ToList();
-        var page  = Pagination.Slice(shaped, query);
+        var page   = Pagination.Slice(shaped, query);
         return Ok(ApiResponse<PagedData<LeadResponse>>.Ok(page, "Leads fetched"));
     }
 
@@ -40,8 +38,8 @@ public class LeadsController(LeadService leads, ContactService contacts) : Contr
     {
         var c = await contacts.GetByIdAsync(id, ct);
         if (c is null)
-            return NotFound(ApiResponse<LeadResponse>.Fail("Lead not found",
-                new ApiError("not_found", "Lead not found")));
+            return NotFound(ApiResponse<LeadResponse>.Fail(
+                "Lead not found", new ApiError("not_found", "Lead not found")));
 
         return Ok(ApiResponse<LeadResponse>.Ok(MapLead(c), "Lead fetched"));
     }
@@ -96,12 +94,19 @@ public class LeadsController(LeadService leads, ContactService contacts) : Contr
 
     private static LeadResponse MapLead(Contact c)
     {
-        var name           = $"{c.FirstName} {c.LastName}".Trim();
-        var ownerInitials  = BuildInitials(c.OwnerName);
+        var name          = $"{c.FirstName} {c.LastName}".Trim();
+        var primaryEmail  = c.Emails.FirstOrDefault(e => e.IsPrimary)?.Email
+                         ?? c.Emails.FirstOrDefault()?.Email ?? "";
+        var primaryPhone  = c.Phones.FirstOrDefault(p => p.IsPrimary)?.Phone
+                         ?? c.Phones.FirstOrDefault()?.Phone ?? "";
+
         return new LeadResponse(
             c.Id, c.FirstName, c.LastName, name,
-            c.Email, c.Phone, c.Company, c.Title,
-            c.Tags, c.OwnerName, ownerInitials,
+            primaryEmail, primaryPhone,
+            c.Emails.Select(ContactsController.MapEmail).ToList(),
+            c.Phones.Select(ContactsController.MapPhone).ToList(),
+            c.Company, c.Title,
+            c.Tags, c.OwnerName, BuildInitials(c.OwnerName),
             c.Source, c.Score, c.Status, c.Notes,
             c.CreatedAt, c.LastActivityAt);
     }

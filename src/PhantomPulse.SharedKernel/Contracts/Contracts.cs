@@ -8,10 +8,12 @@ public interface IMessagingService
 
 public interface IContactService
 {
+    // Looks up by any phone number (primary or non-primary)
     Task<ContactDto?> GetByPhoneAsync(string phone, CancellationToken ct = default);
     Task UpdateFieldAsync(Guid contactId, string field, string value, CancellationToken ct = default);
 }
 
+// Phone / Email are the primary values (empty string when none exists)
 public record ContactDto(Guid Id, string Name, string Phone, string Email, Guid TenantId);
 
 public interface IAutomationTrigger

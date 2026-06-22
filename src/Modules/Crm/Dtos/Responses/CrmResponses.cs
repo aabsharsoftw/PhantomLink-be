@@ -1,14 +1,17 @@
 namespace PhantomPulse.Crm.Dtos.Responses;
 
+public sealed record ContactEmailResponse(Guid Id, string Email, string Label, bool IsPrimary);
+public sealed record ContactPhoneResponse(Guid Id, string Phone, string Label, bool IsPrimary);
+
 public sealed record ContactResponse(
     Guid Id,
     string FirstName,
     string LastName,
-    string Email,
-    string Phone,
     string Company,
     string Source,
-    IReadOnlyList<string> Tags,
+    IReadOnlyList<string>             Tags,
+    IReadOnlyList<ContactEmailResponse> Emails,
+    IReadOnlyList<ContactPhoneResponse> Phones,
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
@@ -23,15 +26,17 @@ public sealed record DealResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
-// ── Lead response (superset of ContactResponse, includes CRM lead fields) ─────
+// ── Lead response ─────────────────────────────────────────────────────────────
 
 public sealed record LeadResponse(
     Guid     Id,
     string   FirstName,
     string   LastName,
     string   Name,
-    string   Email,
-    string   Phone,
+    string   PrimaryEmail,
+    string   PrimaryPhone,
+    IReadOnlyList<ContactEmailResponse> Emails,
+    IReadOnlyList<ContactPhoneResponse> Phones,
     string   Company,
     string   Title,
     string[] Tags,

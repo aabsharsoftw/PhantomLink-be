@@ -25,8 +25,10 @@ public class AppDbContext(
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
-    public DbSet<Contact> Contacts => Set<Contact>();
-    public DbSet<Deal> Deals => Set<Deal>();
+    public DbSet<Contact>      Contacts      => Set<Contact>();
+    public DbSet<ContactEmail> ContactEmails => Set<ContactEmail>();
+    public DbSet<ContactPhone> ContactPhones => Set<ContactPhone>();
+    public DbSet<Deal>         Deals         => Set<Deal>();
 
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
