@@ -22,8 +22,10 @@ public class ContactLeakTests
         var tenantA = Guid.NewGuid(); var tenantB = Guid.NewGuid();
         using (var db = BuildDb(tenantA))
         {
-            db.Contacts.Add(new Contact { TenantId = tenantA, FirstName = "Alice", Phone = "+911111111111" });
-            db.Contacts.Add(new Contact { TenantId = tenantB, FirstName = "Bob",   Phone = "+912222222222" });
+            db.Contacts.Add(new Contact { TenantId = tenantA, FirstName = "Alice",
+                Phones = [new ContactPhone { TenantId = tenantA, Phone = "+911111111111", IsPrimary = true }] });
+            db.Contacts.Add(new Contact { TenantId = tenantB, FirstName = "Bob",
+                Phones = [new ContactPhone { TenantId = tenantB, Phone = "+912222222222", IsPrimary = true }] });
             await db.SaveChangesAsync();
         }
         using var dbA = BuildDb(tenantA);

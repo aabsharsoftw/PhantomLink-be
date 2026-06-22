@@ -228,8 +228,6 @@ internal sealed class LeadSeeder(DbContext db, ILogger<LeadSeeder> logger) : IDa
         TenantId       = TenantId,
         FirstName      = firstName,
         LastName       = lastName,
-        Email          = email,
-        Phone          = phone,
         Company        = company,
         Title          = title,
         Score          = score,
@@ -241,5 +239,15 @@ internal sealed class LeadSeeder(DbContext db, ILogger<LeadSeeder> logger) : IDa
         LastActivityAt = lastActivity,
         CreatedAt      = lastActivity.AddDays(-new Random(id.GetHashCode()).Next(1, 30)),
         UpdatedAt      = lastActivity,
+        Emails = string.IsNullOrWhiteSpace(email) ? [] :
+        [
+            new ContactEmail { TenantId = TenantId, Email = email, Label = "work", IsPrimary = true,
+                CreatedAt = lastActivity, UpdatedAt = lastActivity }
+        ],
+        Phones = string.IsNullOrWhiteSpace(phone) ? [] :
+        [
+            new ContactPhone { TenantId = TenantId, Phone = phone, Label = "mobile", IsPrimary = true,
+                CreatedAt = lastActivity, UpdatedAt = lastActivity }
+        ],
     };
 }

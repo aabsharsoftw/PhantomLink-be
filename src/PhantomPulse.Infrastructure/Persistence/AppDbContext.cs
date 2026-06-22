@@ -28,6 +28,9 @@ public class AppDbContext(
     public DbSet<Contact>      Contacts      => Set<Contact>();
     public DbSet<ContactEmail> ContactEmails => Set<ContactEmail>();
     public DbSet<ContactPhone> ContactPhones => Set<ContactPhone>();
+    public DbSet<ContactNote>  ContactNotes  => Set<ContactNote>();
+    public DbSet<ImportBatch>  ImportBatches => Set<ImportBatch>();
+    public DbSet<Tag>          Tags          => Set<Tag>();
     public DbSet<Deal>         Deals         => Set<Deal>();
 
     public DbSet<Conversation> Conversations => Set<Conversation>();
@@ -62,6 +65,13 @@ public class AppDbContext(
         b.Entity<Contact>()
             .Property(x => x.CustomFields)
             .HasColumnType("jsonb");
+
+        b.Entity<Contact>()
+            .HasOne<ImportBatch>()
+            .WithMany()
+            .HasForeignKey(c => c.ImportBatchId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         b.Entity<Deal>()
             .Property(x => x.CustomFields)

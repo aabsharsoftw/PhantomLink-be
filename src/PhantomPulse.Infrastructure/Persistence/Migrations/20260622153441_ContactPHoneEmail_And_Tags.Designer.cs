@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PhantomPulse.Infrastructure.Persistence;
@@ -12,9 +13,11 @@ using PhantomPulse.Infrastructure.Persistence;
 namespace PhantomPulse.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260622153441_ContactPHoneEmail_And_Tags")]
+    partial class ContactPHoneEmail_And_Tags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -271,10 +274,6 @@ namespace PhantomPulse.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("first_name");
 
-                    b.Property<Guid?>("ImportBatchId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("import_batch_id");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
@@ -340,9 +339,6 @@ namespace PhantomPulse.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_contacts");
-
-                    b.HasIndex("ImportBatchId")
-                        .HasDatabaseName("ix_contacts_import_batch_id");
 
                     b.ToTable("contacts", (string)null);
                 });
@@ -420,64 +416,6 @@ namespace PhantomPulse.Infrastructure.Migrations
                         .HasFilter("is_deleted = false");
 
                     b.ToTable("contact_emails", (string)null);
-                });
-
-            modelBuilder.Entity("PhantomPulse.Crm.Entities.ContactNote", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)")
-                        .HasColumnName("body");
-
-                    b.Property<Guid>("ContactId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("contact_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_contact_notes");
-
-                    b.HasIndex("ContactId")
-                        .HasDatabaseName("ix_contact_notes_contact_id");
-
-                    b.ToTable("contact_notes", (string)null);
                 });
 
             modelBuilder.Entity("PhantomPulse.Crm.Entities.ContactPhone", b =>
@@ -638,90 +576,6 @@ namespace PhantomPulse.Infrastructure.Migrations
                         .HasDatabaseName("ix_deals_contact_id");
 
                     b.ToTable("deals", (string)null);
-                });
-
-            modelBuilder.Entity("PhantomPulse.Crm.Entities.ImportBatch", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Channel")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("channel");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_at");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<string>("ErrorsJson")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("errors_json");
-
-                    b.Property<int>("Failed")
-                        .HasColumnType("integer")
-                        .HasColumnName("failed");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)")
-                        .HasColumnName("file_name");
-
-                    b.Property<int>("Imported")
-                        .HasColumnType("integer")
-                        .HasColumnName("imported");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<int>("Skipped")
-                        .HasColumnType("integer")
-                        .HasColumnName("skipped");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("status");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<int>("Total")
-                        .HasColumnType("integer")
-                        .HasColumnName("total");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("updated_by");
-
-                    b.HasKey("Id")
-                        .HasName("pk_import_batches");
-
-                    b.ToTable("import_batches", (string)null);
                 });
 
             modelBuilder.Entity("PhantomPulse.Crm.Entities.Tag", b =>
@@ -1789,15 +1643,6 @@ namespace PhantomPulse.Infrastructure.Migrations
                     b.ToTable("templates", (string)null);
                 });
 
-            modelBuilder.Entity("PhantomPulse.Crm.Entities.Contact", b =>
-                {
-                    b.HasOne("PhantomPulse.Crm.Entities.ImportBatch", null)
-                        .WithMany()
-                        .HasForeignKey("ImportBatchId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_contacts_import_batches_import_batch_id");
-                });
-
             modelBuilder.Entity("PhantomPulse.Crm.Entities.ContactEmail", b =>
                 {
                     b.HasOne("PhantomPulse.Crm.Entities.Contact", "Contact")
@@ -1806,18 +1651,6 @@ namespace PhantomPulse.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_contact_emails_contacts_contact_id");
-
-                    b.Navigation("Contact");
-                });
-
-            modelBuilder.Entity("PhantomPulse.Crm.Entities.ContactNote", b =>
-                {
-                    b.HasOne("PhantomPulse.Crm.Entities.Contact", "Contact")
-                        .WithMany("ContactNotes")
-                        .HasForeignKey("ContactId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_contact_notes_contacts_contact_id");
 
                     b.Navigation("Contact");
                 });
@@ -1932,8 +1765,6 @@ namespace PhantomPulse.Infrastructure.Migrations
 
             modelBuilder.Entity("PhantomPulse.Crm.Entities.Contact", b =>
                 {
-                    b.Navigation("ContactNotes");
-
                     b.Navigation("Deals");
 
                     b.Navigation("Emails");

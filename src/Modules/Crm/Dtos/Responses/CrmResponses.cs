@@ -26,6 +26,44 @@ public sealed record DealResponse(
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
+// ── Tag response ──────────────────────────────────────────────────────────────
+
+public sealed record ContactNoteResponse(
+    Guid     Id,
+    string   Body,
+    DateTime CreatedAt);
+
+public sealed record ImportRowError(int Row, string Column, string Message);
+
+public sealed record ImportLeadsResult(
+    Guid                          BatchId,
+    int                           Total,
+    int                           Imported,
+    int                           Skipped,
+    int                           Failed,
+    IReadOnlyList<ImportRowError> Errors);
+
+public sealed record ImportBatchResponse(
+    Guid     Id,
+    string   FileName,
+    string   Channel,
+    int      Total,
+    int      Imported,
+    int      Skipped,
+    int      Failed,
+    string   Status,
+    DateTime ImportedAt);
+
+public sealed record TagResponse(
+    Guid     Id,
+    string   Name,
+    string   Color,
+    string   Description,
+    bool     IsSystem,
+    int      ContactCount,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
+
 // ── Lead response ─────────────────────────────────────────────────────────────
 
 public sealed record LeadResponse(

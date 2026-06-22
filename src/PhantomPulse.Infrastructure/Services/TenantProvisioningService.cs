@@ -6,8 +6,8 @@ namespace PhantomPulse.Infrastructure.Services;
 
 /// <summary>
 /// Seeds a realistic starter dataset for every new tenant created via signup:
-/// sample contacts (across open / won / lost / churned statuses), sample deals
-/// spread across pipeline stages, and common CRM tags pre-applied.
+/// sample contacts (with multi-email/phone), sample deals spread across pipeline
+/// stages, and the five system tags pre-created for the new tenant.
 /// Called synchronously from AuthService.SignupAsync after the user record is saved.
 /// </summary>
 public sealed class TenantProvisioningService(DbContext db) : ITenantProvisioner
@@ -16,9 +16,11 @@ public sealed class TenantProvisioningService(DbContext db) : ITenantProvisioner
         Guid agencyId, Guid subAccountId, Guid ownerUserId, string ownerName,
         CancellationToken ct = default)
     {
-        // The new user is agency-scoped (TenantId = agencyId). The EF global filter
-        // returns entities where TenantId == caller.TenantId, so sample data must
-        // share the same TenantId or it will be invisible to the new owner.
+        // System tags are provisioned first so contact Tags strings can reference them.
+        var systemTags = BuildSystemTags(agencyId);
+        db.Set<Tag>().AddRange(systemTags);
+        await db.SaveChangesAsync(ct);
+
         var contacts = BuildSampleContacts(agencyId, ownerUserId, ownerName);
         db.Set<Contact>().AddRange(contacts);
         await db.SaveChangesAsync(ct);
@@ -28,6 +30,19 @@ public sealed class TenantProvisioningService(DbContext db) : ITenantProvisioner
         await db.SaveChangesAsync(ct);
     }
 
+    // ── System tag definitions ────────────────────────────────────────────────
+
+    private static Tag[] BuildSystemTags(Guid tenantId) =>
+    [
+        new Tag { TenantId = tenantId, Name = "⭐ VIP",       Color = "#F59E0B", Description = "High-value, priority contacts",    IsSystem = true },
+        new Tag { TenantId = tenantId, Name = "✅ Customer",  Color = "#10B981", Description = "Existing paying customers",         IsSystem = true },
+        new Tag { TenantId = tenantId, Name = "🎯 Prospect",  Color = "#6366F1", Description = "Leads being actively qualified",    IsSystem = true },
+        new Tag { TenantId = tenantId, Name = "🔥 Hot Lead",  Color = "#EF4444", Description = "High intent, needs quick follow-up", IsSystem = true },
+        new Tag { TenantId = tenantId, Name = "📥 Imported",  Color = "#8B5CF6", Description = "Contacts added via bulk import",     IsSystem = true },
+    ];
+
+    // ── Sample contacts ───────────────────────────────────────────────────────
+
     private static Contact[] BuildSampleContacts(Guid tenantId, Guid ownerUserId, string ownerName) =>
     [
         new Contact
@@ -35,26 +50,24 @@ public sealed class TenantProvisioningService(DbContext db) : ITenantProvisioner
             TenantId       = tenantId,
             FirstName      = "Arjun",
             LastName       = "Sharma",
-            Email          = "arjun.sharma@sharmaenterprises.com",
-            Phone          = "+91 98765 43210",
             Company        = "Sharma Enterprises",
             Title          = "CEO",
             Source         = "referral",
-            Tags           = ["demo", "hot-lead", "enterprise", "follow-up"],
+            Tags           = ["demo", "🔥 Hot Lead", "enterprise", "follow-up"],
             Score          = 84,
             Status         = "open",
             Notes          = "Referred by existing client. Interested in enterprise plan. Schedule demo this week.",
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddDays(-1),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "arjun.sharma@sharmaenterprises.com", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+91 98765 43210",                   Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Priya",
             LastName       = "Mehta",
-            Email          = "priya.mehta@techsolutions.in",
-            Phone          = "+91 87654 32109",
             Company        = "TechSolutions Pvt Ltd",
             Title          = "Marketing Director",
             Source         = "website",
@@ -65,32 +78,32 @@ public sealed class TenantProvisioningService(DbContext db) : ITenantProvisioner
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddDays(-3),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "priya.mehta@techsolutions.in", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+91 87654 32109",              Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Rahul",
             LastName       = "Verma",
-            Email          = "rahul.verma@vermagroup.com",
-            Phone          = "+91 76543 21098",
             Company        = "Verma & Co.",
             Title          = "Operations Manager",
             Source         = "cold-outreach",
-            Tags           = ["demo", "enterprise", "upsell"],
+            Tags           = ["demo", "enterprise", "upsell", "✅ Customer"],
             Score          = 91,
             Status         = "won",
             Notes          = "Closed Q1 deal (₹2.4L). Follow up in July for multi-seat upsell.",
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddDays(-14),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "rahul.verma@vermagroup.com", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+91 76543 21098",            Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Neha",
             LastName       = "Kapoor",
-            Email          = "neha.kapoor@kapoorretail.com",
-            Phone          = "+91 65432 10987",
             Company        = "Kapoor Retail Group",
             Title          = "Procurement Head",
             Source         = "cold-outreach",
@@ -101,90 +114,93 @@ public sealed class TenantProvisioningService(DbContext db) : ITenantProvisioner
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddDays(-45),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "neha.kapoor@kapoorretail.com", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+91 65432 10987",              Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Vikram",
             LastName       = "Singh",
-            Email          = "vikram@singhlogistics.com",
-            Phone          = "+91 54321 09876",
             Company        = "Singh Logistics",
             Title          = "Director",
             Source         = "website",
-            Tags           = ["demo", "new", "warm-lead"],
+            Tags           = ["demo", "new", "warm-lead", "🎯 Prospect"],
             Score          = 52,
             Status         = "open",
             Notes          = "Submitted contact form. Initial discovery call not yet scheduled.",
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow,
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "vikram@singhlogistics.com", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+91 54321 09876",           Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Aisha",
             LastName       = "Khan",
-            Email          = "aisha.khan@khanfashions.ae",
-            Phone          = "+971 52 345 6789",
             Company        = "Khan Fashions LLC",
             Title          = "Managing Partner",
             Source         = "social",
-            Tags           = ["demo", "hot-lead", "retail", "uae"],
+            Tags           = ["demo", "🔥 Hot Lead", "retail", "uae"],
             Score          = 79,
             Status         = "open",
             Notes          = "Engaged via Instagram ad. Looking for WhatsApp CRM for their boutique chain.",
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddHours(-6),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "aisha.khan@khanfashions.ae", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+971 52 345 6789",           Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Mohammed",
             LastName       = "Al-Rashid",
-            Email          = "m.rashid@alrashidrealty.ae",
-            Phone          = "+971 50 678 9012",
             Company        = "Al-Rashid Realty",
             Title          = "CEO",
             Source         = "referral",
-            Tags           = ["demo", "real-estate", "high-value"],
+            Tags           = ["demo", "real-estate", "high-value", "✅ Customer", "⭐ VIP"],
             Score          = 88,
             Status         = "won",
             Notes          = "Closed annual plan. Uses the platform for lead tracking across 3 offices.",
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddDays(-7),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "m.rashid@alrashidrealty.ae", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+971 50 678 9012",           Label = "mobile", IsPrimary = true }],
         },
         new Contact
         {
             TenantId       = tenantId,
             FirstName      = "Sunita",
             LastName       = "Rao",
-            Email          = "sunita.rao@raoclinic.in",
-            Phone          = "+91 93456 78901",
             Company        = "Rao Dental Clinic",
             Title          = "Clinic Owner",
             Source         = "import",
-            Tags           = ["demo", "healthcare", "smb"],
+            Tags           = ["demo", "healthcare", "smb", "📥 Imported"],
             Score          = 45,
             Status         = "lost",
             Notes          = "Budget constraints. Opted for a free tool. May revisit after 6 months.",
             OwnerId        = ownerUserId,
             OwnerName      = ownerName,
             LastActivityAt = DateTime.UtcNow.AddDays(-22),
+            Emails         = [new ContactEmail { TenantId = tenantId, Email = "sunita.rao@raoclinic.in", Label = "work",   IsPrimary = true }],
+            Phones         = [new ContactPhone { TenantId = tenantId, Phone = "+91 93456 78901",         Label = "mobile", IsPrimary = true }],
         },
     ];
 
+    // ── Sample deals ──────────────────────────────────────────────────────────
+
     private static Deal[] BuildSampleDeals(Guid tenantId, Contact[] contacts)
     {
-        // Index contacts by company for readability
-        var arjun   = contacts[0]; // open, hot-lead
-        var priya   = contacts[1]; // open, warm
-        var rahul   = contacts[2]; // won
-        var vikram  = contacts[4]; // open, new
-        var aisha   = contacts[5]; // open, hot uae
-        var rashid  = contacts[6]; // won
+        var arjun  = contacts[0];
+        var priya  = contacts[1];
+        var rahul  = contacts[2];
+        var vikram = contacts[4];
+        var aisha  = contacts[5];
+        var rashid = contacts[6];
 
         return
         [

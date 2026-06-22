@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PhantomPulse.Crm.Dtos.Requests;
+using PhantomPulse.Crm.Dtos.Responses;
 using PhantomPulse.Crm.Entities;
 using PhantomPulse.SharedKernel.Contracts;
 using PhantomPulse.SharedKernel.Domain;
@@ -50,7 +52,8 @@ public class ContactService(DbContext db, ITenantContext tenant) : IContactServi
         IEnumerable<PhoneInput>? phones,
         CancellationToken ct = default)
     {
-        var tenantId = tenant.TenantId!.Value;
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set. Ensure the request carries a valid sub-account token.");
         var c = new Contact
         {
             TenantId       = tenantId,
@@ -83,6 +86,38 @@ public class ContactService(DbContext db, ITenantContext tenant) : IContactServi
         var c = await db.Set<Contact>().FindAsync([contactId], ct) ?? throw new KeyNotFoundException();
         if (!c.Tags.Contains(tag))
             c.Tags = [.. c.Tags, tag];
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task RemoveTagAsync(Guid contactId, string tag, CancellationToken ct = default)
+    {
+        var c = await db.Set<Contact>().FindAsync([contactId], ct) ?? throw new KeyNotFoundException();
+        c.Tags = c.Tags.Where(t => t != tag).ToArray();
+        await db.SaveChangesAsync(ct);
+    }
+
+    // ── Notes ─────────────────────────────────────────────────────────────────
+
+    public Task<List<ContactNote>> GetNotesAsync(Guid contactId, CancellationToken ct = default)
+        => db.Set<ContactNote>()
+             .Where(n => n.ContactId == contactId)
+             .OrderByDescending(n => n.CreatedAt)
+             .ToListAsync(ct);
+
+    public async Task<ContactNote> AddNoteAsync(Guid contactId, string body, CancellationToken ct = default)
+    {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set. Ensure the request carries a valid sub-account token.");
+        var note = new ContactNote { TenantId = tenantId, ContactId = contactId, Body = body };
+        db.Set<ContactNote>().Add(note);
+        await db.SaveChangesAsync(ct);
+        return note;
+    }
+
+    public async Task DeleteNoteAsync(Guid noteId, CancellationToken ct = default)
+    {
+        var n = await db.Set<ContactNote>().FindAsync([noteId], ct) ?? throw new KeyNotFoundException();
+        db.Set<ContactNote>().Remove(n);
         await db.SaveChangesAsync(ct);
     }
 
@@ -364,7 +399,8 @@ public class LeadService(DbContext db, ITenantContext tenant)
 
     public async Task<Contact> CreateAsync(CreateLeadRequest req, CancellationToken ct = default)
     {
-        var tenantId = tenant.TenantId!.Value;
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set. Ensure the request carries a valid sub-account token.");
         var c = new Contact
         {
             TenantId       = tenantId,
@@ -407,6 +443,221 @@ public class LeadService(DbContext db, ITenantContext tenant)
         return c;
     }
 
+    // ── CSV Import ────────────────────────────────────────────────────────────
+
+    public async Task<ImportLeadsResult> ImportAsync(
+        Microsoft.AspNetCore.Http.IFormFile file,
+        Dictionary<string, string> mapping,
+        string channel,
+        CancellationToken ct = default)
+    {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set. Ensure the request carries a valid sub-account token.");
+
+        // Pre-create the batch so its ID is available to stamp on each contact
+        var batch = new ImportBatch
+        {
+            TenantId = tenantId,
+            FileName = file.FileName,
+            Channel  = channel,
+        };
+        db.Set<ImportBatch>().Add(batch);
+
+        using var stream = file.OpenReadStream();
+        var rows = ParseCsv(stream);
+        if (rows.Count < 2)
+        {
+            await db.SaveChangesAsync(ct);
+            return new ImportLeadsResult(batch.Id, 0, 0, 0, 0, []);
+        }
+
+        var headers  = rows[0];
+        var dataRows = rows.Skip(1).Where(r => r.Any(f => !string.IsNullOrWhiteSpace(f))).ToList();
+
+        // Build lookup: csvHeader → column index
+        var headerIndex = headers
+            .Select((h, i) => (h.Trim(), i))
+            .Where(x => !string.IsNullOrWhiteSpace(x.Item1))
+            .GroupBy(x => x.Item1)
+            .ToDictionary(g => g.Key, g => g.First().i);
+
+        // Load existing emails + phones for duplicate detection (tenant-scoped via query filter)
+        var existingEmails = (await db.Set<ContactEmail>().Select(e => e.Email.ToLower()).ToListAsync(ct)).ToHashSet();
+        var existingPhones = (await db.Set<ContactPhone>().Select(p => p.Phone).ToListAsync(ct)).ToHashSet();
+
+        var imported = 0;
+        var skipped  = 0;
+        var failed   = 0;
+        var errors   = new List<ImportRowError>();
+
+        for (var rowIdx = 0; rowIdx < dataRows.Count; rowIdx++)
+        {
+            var row     = dataRows[rowIdx];
+            var lineNum = rowIdx + 2; // 1-based, row 1 is header
+
+            string Get(string field)
+            {
+                var csvCol = mapping.FirstOrDefault(m => m.Value == field).Key;
+                if (csvCol is null || !headerIndex.TryGetValue(csvCol, out var idx) || idx >= row.Length)
+                    return "";
+                return row[idx].Trim();
+            }
+
+            var firstName = Get("firstName");
+            var lastName  = Get("lastName");
+            var email     = Get("email");
+            var phone     = Get("phone");
+            var company   = Get("company");
+            var title     = Get("title");
+            var source    = Get("source");
+            var notes     = Get("notes");
+            var ownerName = Get("ownerName");
+
+            if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName))
+            {
+                errors.Add(new ImportRowError(lineNum, "Name", "First name or last name is required"));
+                failed++;
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(phone))
+            {
+                errors.Add(new ImportRowError(lineNum, "Contact", "At least one of email or phone is required"));
+                failed++;
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(email) && !IsValidEmail(email))
+            {
+                errors.Add(new ImportRowError(lineNum, "Email", $"'{email}' is not a valid email address"));
+                failed++;
+                continue;
+            }
+
+            // Duplicate detection
+            var isDuplicate = (!string.IsNullOrWhiteSpace(email) && existingEmails.Contains(email.ToLower()))
+                           || (!string.IsNullOrWhiteSpace(phone) && existingPhones.Contains(phone));
+            if (isDuplicate) { skipped++; continue; }
+
+            var c = new Contact
+            {
+                TenantId       = tenantId,
+                FirstName      = firstName,
+                LastName       = lastName,
+                Company        = company,
+                Title          = title,
+                Source         = string.IsNullOrWhiteSpace(source) ? "import" : source.ToLower(),
+                Notes          = notes,
+                OwnerName      = ownerName,
+                Score          = 50,
+                Status         = "open",
+                LastActivityAt = DateTime.UtcNow,
+                ImportBatchId  = batch.Id,
+            };
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                c.Emails.Add(new ContactEmail { TenantId = tenantId, Email = email, Label = "work", IsPrimary = true });
+                existingEmails.Add(email.ToLower());
+            }
+
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                c.Phones.Add(new ContactPhone { TenantId = tenantId, Phone = phone, Label = "mobile", IsPrimary = true });
+                existingPhones.Add(phone);
+            }
+
+            db.Set<Contact>().Add(c);
+            imported++;
+        }
+
+        batch.Total      = dataRows.Count;
+        batch.Imported   = imported;
+        batch.Skipped    = skipped;
+        batch.Failed     = failed;
+        batch.ErrorsJson = JsonSerializer.Serialize(errors);
+
+        await db.SaveChangesAsync(ct);
+        return new ImportLeadsResult(batch.Id, dataRows.Count, imported, skipped, failed, errors);
+    }
+
+    // ── Import History ────────────────────────────────────────────────────────
+
+    public Task<List<ImportBatch>> GetImportHistoryAsync(CancellationToken ct = default)
+        => db.Set<ImportBatch>()
+             .OrderByDescending(b => b.CreatedAt)
+             .ToListAsync(ct);
+
+    public async Task RevertImportAsync(Guid batchId, CancellationToken ct = default)
+    {
+        var batch = await db.Set<ImportBatch>().FindAsync([batchId], ct)
+            ?? throw new KeyNotFoundException("Import batch not found.");
+
+        if (batch.Status == "reverted")
+            throw new InvalidOperationException("This import has already been reverted.");
+
+        var contacts = await db.Set<Contact>()
+            .Where(c => c.ImportBatchId == batchId)
+            .ToListAsync(ct);
+
+        foreach (var c in contacts)
+        {
+            c.IsDeleted  = true;
+            c.DeletedAt  = DateTime.UtcNow;
+        }
+
+        batch.Status    = "reverted";
+        batch.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+    }
+
+    private static bool IsValidEmail(string email) =>
+        System.Text.RegularExpressions.Regex.IsMatch(email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    private static List<string[]> ParseCsv(Stream stream)
+    {
+        var rows = new List<string[]>();
+        using var reader = new StreamReader(stream);
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            rows.Add(SplitCsvLine(line));
+        }
+        return rows;
+    }
+
+    private static string[] SplitCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var i      = 0;
+        while (i < line.Length)
+        {
+            if (line[i] == '"')
+            {
+                i++;
+                var sb = new System.Text.StringBuilder();
+                while (i < line.Length)
+                {
+                    if (line[i] == '"' && i + 1 < line.Length && line[i + 1] == '"') { sb.Append('"'); i += 2; }
+                    else if (line[i] == '"') { i++; break; }
+                    else { sb.Append(line[i++]); }
+                }
+                fields.Add(sb.ToString());
+                if (i < line.Length && line[i] == ',') i++;
+            }
+            else
+            {
+                var end = line.IndexOf(',', i);
+                if (end < 0) { fields.Add(line[i..].Trim()); break; }
+                fields.Add(line[i..end].Trim());
+                i = end + 1;
+            }
+        }
+        return [.. fields];
+    }
+
     private static void AttachEmails(Contact c, Guid tenantId, IEnumerable<EmailInput>? emails)
     {
         if (emails is null) return;
@@ -444,6 +695,97 @@ public class LeadService(DbContext db, ITenantContext tenant)
     }
 }
 
+// ── Tag service ───────────────────────────────────────────────────────────────
+
+public record TagWithCount(Tag Tag, int ContactCount);
+
+public class TagService(DbContext db, ITenantContext tenant)
+{
+    public async Task<List<TagWithCount>> GetAllAsync(string? search, CancellationToken ct = default)
+    {
+        var q = db.Set<Tag>().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            q = q.Where(t => t.Name.ToLower().Contains(s) || t.Description.ToLower().Contains(s));
+        }
+
+        var tagList = await q
+            .OrderBy(t => !t.IsSystem)  // system tags first
+            .ThenBy(t => t.Name)
+            .ToListAsync(ct);
+
+        // Single query: pull all contact tag arrays, count in memory
+        var contactTagArrays = await db.Set<Contact>().Select(c => c.Tags).ToListAsync(ct);
+        var tagCounts = contactTagArrays
+            .SelectMany(arr => arr)
+            .GroupBy(n => n, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+        return tagList
+            .Select(t => new TagWithCount(t, tagCounts.GetValueOrDefault(t.Name, 0)))
+            .ToList();
+    }
+
+    public Task<Tag?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => db.Set<Tag>().FirstOrDefaultAsync(t => t.Id == id, ct);
+
+    public async Task<Tag> CreateAsync(
+        string name, string color, string description, CancellationToken ct = default)
+    {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set. Ensure the request carries a valid sub-account token.");
+
+        var dup = await db.Set<Tag>().AnyAsync(t => t.Name.ToLower() == name.ToLower(), ct);
+        if (dup) throw new InvalidOperationException($"Tag '{name}' already exists.");
+
+        var tag = new Tag
+        {
+            TenantId    = tenantId,
+            Name        = name,
+            Color       = color,
+            Description = description,
+            IsSystem    = false,
+        };
+        db.Set<Tag>().Add(tag);
+        await db.SaveChangesAsync(ct);
+        return tag;
+    }
+
+    public async Task<Tag> UpdateAsync(
+        Guid id, string name, string color, string description, CancellationToken ct = default)
+    {
+        var tag = await db.Set<Tag>().FirstOrDefaultAsync(t => t.Id == id, ct)
+            ?? throw new KeyNotFoundException("Tag not found.");
+
+        if (!string.Equals(tag.Name, name, StringComparison.OrdinalIgnoreCase))
+        {
+            var dup = await db.Set<Tag>()
+                .AnyAsync(t => t.Name.ToLower() == name.ToLower() && t.Id != id, ct);
+            if (dup) throw new InvalidOperationException($"Tag '{name}' already exists.");
+        }
+
+        tag.Name        = name;
+        tag.Color       = color;
+        tag.Description = description;
+        tag.UpdatedAt   = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return tag;
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var tag = await db.Set<Tag>().FirstOrDefaultAsync(t => t.Id == id, ct)
+            ?? throw new KeyNotFoundException("Tag not found.");
+
+        if (tag.IsSystem) throw new InvalidOperationException("System tags cannot be deleted.");
+
+        db.Set<Tag>().Remove(tag);
+        await db.SaveChangesAsync(ct);
+    }
+}
+
 // ── Pipeline service ──────────────────────────────────────────────────────────
 
 public class PipelineService(DbContext db, ITenantContext tenant)
@@ -454,9 +796,11 @@ public class PipelineService(DbContext db, ITenantContext tenant)
     public async Task<Deal> CreateAsync(
         Guid contactId, string title, decimal value, string currency, CancellationToken ct = default)
     {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set. Ensure the request carries a valid sub-account token.");
         var d = new Deal
         {
-            TenantId  = tenant.TenantId!.Value,
+            TenantId  = tenantId,
             ContactId = contactId,
             Title     = title,
             Value     = value,
