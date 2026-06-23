@@ -42,6 +42,7 @@ public class AppDbContext(
     public DbSet<Campaign> Campaigns => Set<Campaign>();
 
     public DbSet<MessageTemplate> Templates => Set<MessageTemplate>();
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {

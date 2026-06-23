@@ -13,6 +13,7 @@ public static class MessagingModule
         services.AddScoped<MessagingService>();
         services.AddScoped<IMessagingService, MessagingService>();
         services.AddScoped<TemplateService>();
+        services.AddScoped<EmailTemplateService>();
         return services;
     }
 }

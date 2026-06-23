@@ -16,3 +16,21 @@ public record UpdateTemplateRequest(
     string?   Body,
     string[]? Variables
 );
+
+public record CreateEmailTemplateRequest(
+    string   Name,
+    string   Subject,
+    string   HtmlBody,
+    string   TextBody,
+    string   Category,
+    string[] Variables
+);
+
+public record UpdateEmailTemplateRequest(
+    string?   Name,
+    string?   Subject,
+    string?   HtmlBody,
+    string?   TextBody,
+    string?   Status,
+    string[]? Variables
+);

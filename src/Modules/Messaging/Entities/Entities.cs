@@ -32,3 +32,15 @@ public class MessageTemplate : BaseEntity
     public string[] Variables { get; set; } = [];
     public int      Usage     { get; set; } = 0;
 }
+
+public class EmailTemplate : BaseEntity
+{
+    public string   Name       { get; set; } = "";
+    public string   Subject    { get; set; } = "";
+    public string   HtmlBody   { get; set; } = "";
+    public string   TextBody   { get; set; } = "";
+    public string   Category   { get; set; } = "Marketing"; // Marketing | Utility | Authentication
+    public string   Status     { get; set; } = "Pending";   // Approved | Pending | Rejected
+    public string[] Variables  { get; set; } = [];
+    public int      Usage      { get; set; } = 0;
+}

@@ -15,3 +15,16 @@ public record TemplateResponse(
     int      Usage,
     DateTime UpdatedAt
 );
+
+public record EmailTemplateResponse(
+    Guid     Id,
+    string   Name,
+    string   Subject,
+    string   HtmlBody,
+    string   TextBody,
+    string   Category,
+    string   Status,
+    string[] Variables,
+    int      Usage,
+    DateTime UpdatedAt
+);
