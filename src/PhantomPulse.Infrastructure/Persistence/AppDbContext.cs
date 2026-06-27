@@ -32,6 +32,7 @@ public class AppDbContext(
     public DbSet<ImportBatch>  ImportBatches => Set<ImportBatch>();
     public DbSet<Tag>          Tags          => Set<Tag>();
     public DbSet<Deal>         Deals         => Set<Deal>();
+    public DbSet<SmartList>    SmartLists    => Set<SmartList>();
 
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();

@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace PhantomPulse.Crm.Dtos.Responses;
 
 public sealed record ContactEmailResponse(Guid Id, string Email, string Label, bool IsPrimary);
@@ -86,3 +88,30 @@ public sealed record LeadResponse(
     string   Notes,
     DateTime CreatedAt,
     DateTime LastActivityAt);
+
+// ── Import result (with optional smart list) ──────────────────────────────────
+
+public sealed record ImportResultWithSmartList(
+    Guid                          BatchId,
+    int                           Total,
+    int                           Imported,
+    int                           Skipped,
+    int                           Failed,
+    IReadOnlyList<ImportRowError> Errors,
+    Guid?                         SmartListId);
+
+// ── Smart List response ───────────────────────────────────────────────────────
+
+public sealed record SmartListResponse(
+    Guid         Id,
+    string       Name,
+    string       Color,
+    string       Description,
+    bool         IsSystem,
+    int          SortOrder,
+    int          ContactCount,
+    JsonElement  Rules,
+    DateTime     CreatedAt,
+    DateTime     UpdatedAt);
+
+public sealed record SmartListPreviewResponse(int Count);

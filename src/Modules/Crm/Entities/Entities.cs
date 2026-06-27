@@ -81,3 +81,13 @@ public class Deal : BaseEntity
     public Dictionary<string, object?> CustomFields { get; set; } = new();
     public Contact Contact { get; set; } = null!;
 }
+
+public class SmartList : BaseEntity
+{
+    public string Name        { get; set; } = "";
+    public string Color       { get; set; } = "#6366F1";
+    public string Description { get; set; } = "";
+    public bool   IsSystem    { get; set; }
+    public string RulesJson   { get; set; } = """{"operator":"and","conditions":[]}""";
+    public int    SortOrder   { get; set; }
+}

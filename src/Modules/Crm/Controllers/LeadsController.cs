@@ -130,7 +130,7 @@ public class LeadsController(LeadService leads, ContactService contacts) : Contr
         return Ok(ApiResponse<LeadResponse>.Ok(MapLead(c), "Status updated"));
     }
 
-    /// <summary>POST /api/crm/leads/import — multipart/form-data: file (.csv), mapping (JSON), channel</summary>
+    /// <summary>POST /api/crm/leads/import — multipart/form-data: file (.csv), mapping (JSON), channel, createSmartList, smartListName</summary>
     [RequirePermission("contacts.create")]
     [HttpPost("import")]
     [RequestSizeLimit(25 * 1024 * 1024)]
@@ -138,6 +138,8 @@ public class LeadsController(LeadService leads, ContactService contacts) : Contr
         IFormFile file,
         [FromForm] string mapping,
         [FromForm] string channel = "all",
+        [FromForm] bool createSmartList = false,
+        [FromForm] string smartListName = "",
         CancellationToken ct = default)
     {
         if (file is null || file.Length == 0)
@@ -153,8 +155,8 @@ public class LeadsController(LeadService leads, ContactService contacts) : Contr
         catch { return BadRequest(ApiResponse<object>.Fail(
                     "Invalid mapping", new ApiError("invalid_mapping", "Column mapping is not valid JSON"))); }
 
-        var result = await leads.ImportAsync(file, columnMapping, channel, ct);
-        return Ok(ApiResponse<ImportLeadsResult>.Ok(result,
+        var result = await leads.ImportAsync(file, columnMapping, channel, createSmartList, smartListName, ct);
+        return Ok(ApiResponse<ImportResultWithSmartList>.Ok(result,
             $"Import complete: {result.Imported} imported, {result.Skipped} skipped, {result.Failed} failed"));
     }
 

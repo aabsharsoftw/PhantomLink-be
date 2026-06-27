@@ -49,3 +49,21 @@ public sealed record UpdateStatusRequest(string Status);
 
 public sealed record CreateTagRequest(string Name, string Color = "#6366F1", string Description = "");
 public sealed record UpdateTagRequest(string Name, string Color, string Description = "");
+
+// ── Smart List requests ────────────────────────────────────────────────────────
+
+public sealed record CreateSmartListRequest(
+    string Name,
+    string Color       = "#6366F1",
+    string Description = "",
+    string RulesJson   = """{"operator":"and","conditions":[]}""");
+
+public sealed record UpdateSmartListRequest(
+    string Name,
+    string Color,
+    string Description,
+    string RulesJson);
+
+public sealed record RenameSmartListRequest(string Name);
+
+public sealed record PreviewSmartListRequest(string RulesJson);

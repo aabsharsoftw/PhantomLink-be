@@ -5,6 +5,7 @@ using PhantomPulse.Crm.Dtos.Responses;
 using PhantomPulse.Crm.Entities;
 using PhantomPulse.SharedKernel.Contracts;
 using PhantomPulse.SharedKernel.Domain;
+using Microsoft.AspNetCore.Http;
 
 namespace PhantomPulse.Crm.Services;
 
@@ -445,10 +446,12 @@ public class LeadService(DbContext db, ITenantContext tenant)
 
     // ── CSV Import ────────────────────────────────────────────────────────────
 
-    public async Task<ImportLeadsResult> ImportAsync(
-        Microsoft.AspNetCore.Http.IFormFile file,
+    public async Task<ImportResultWithSmartList> ImportAsync(
+        IFormFile file,
         Dictionary<string, string> mapping,
         string channel,
+        bool createSmartList = false,
+        string smartListName = "",
         CancellationToken ct = default)
     {
         var tenantId = tenant.TenantId
@@ -468,7 +471,7 @@ public class LeadService(DbContext db, ITenantContext tenant)
         if (rows.Count < 2)
         {
             await db.SaveChangesAsync(ct);
-            return new ImportLeadsResult(batch.Id, 0, 0, 0, 0, []);
+            return new ImportResultWithSmartList(batch.Id, 0, 0, 0, 0, [], null);
         }
 
         var headers  = rows[0];
@@ -577,8 +580,37 @@ public class LeadService(DbContext db, ITenantContext tenant)
         batch.Failed     = failed;
         batch.ErrorsJson = JsonSerializer.Serialize(errors);
 
+        Guid? smartListId = null;
+        if (createSmartList && imported > 0)
+        {
+            var listName = string.IsNullOrWhiteSpace(smartListName)
+                ? $"Import {DateTime.UtcNow:yyyy-MM-dd}"
+                : smartListName;
+
+            var rulesJson = JsonSerializer.Serialize(new
+            {
+                @operator  = "and",
+                conditions = new[]
+                {
+                    new { field = "importBatchId", @operator = "equals", value = batch.Id.ToString() },
+                },
+            });
+
+            var sl = new SmartList
+            {
+                TenantId    = tenantId,
+                Name        = listName,
+                Color       = "#6366F1",
+                Description = $"Contacts from import on {DateTime.UtcNow:yyyy-MM-dd}",
+                RulesJson   = rulesJson,
+                SortOrder   = 0,
+            };
+            db.Set<SmartList>().Add(sl);
+            smartListId = sl.Id;
+        }
+
         await db.SaveChangesAsync(ct);
-        return new ImportLeadsResult(batch.Id, dataRows.Count, imported, skipped, failed, errors);
+        return new ImportResultWithSmartList(batch.Id, dataRows.Count, imported, skipped, failed, errors, smartListId);
     }
 
     // ── Import History ────────────────────────────────────────────────────────
@@ -818,5 +850,178 @@ public class PipelineService(DbContext db, ITenantContext tenant)
         d.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
         return d;
+    }
+}
+
+// ── Smart List service ────────────────────────────────────────────────────────
+
+public class SmartListService(DbContext db, ITenantContext tenant)
+{
+    // ── Queries ───────────────────────────────────────────────────────────────
+
+    public async Task<List<(SmartList List, int Count)>> GetAllAsync(CancellationToken ct = default)
+    {
+        var lists = await db.Set<SmartList>()
+            .OrderBy(s => s.SortOrder)
+            .ThenBy(s => s.Name)
+            .ToListAsync(ct);
+
+        var baseQuery = db.Set<Contact>()
+            .Include(c => c.Emails)
+            .Include(c => c.Phones);
+
+        var result = new List<(SmartList, int)>();
+        foreach (var sl in lists)
+        {
+            var count = SmartListRuleEngine.Count(baseQuery.AsQueryable(), sl.RulesJson);
+            result.Add((sl, count));
+        }
+        return result;
+    }
+
+    public Task<SmartList?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public async Task<PagedData<Contact>> GetContactsAsync(
+        Guid id, string? search, PaginationQuery pagination, CancellationToken ct = default)
+    {
+        var sl = await db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct)
+            ?? throw new KeyNotFoundException("Smart list not found.");
+
+        var q = db.Set<Contact>()
+            .Include(c => c.Emails)
+            .Include(c => c.Phones)
+            .AsQueryable();
+
+        q = SmartListRuleEngine.Apply(q, sl.RulesJson);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.ToLower();
+            q = q.Where(c =>
+                c.FirstName.ToLower().Contains(s) ||
+                c.LastName.ToLower().Contains(s)  ||
+                c.Company.ToLower().Contains(s)   ||
+                c.Emails.Any(e => e.Email.ToLower().Contains(s)) ||
+                c.Phones.Any(p => p.Phone.Contains(s)));
+        }
+
+        q = q.OrderByDescending(c => c.CreatedAt);
+
+        var total   = await q.CountAsync(ct);
+        var page    = Math.Max(1, pagination.Page);
+        var size    = Math.Clamp(pagination.PageSize, 1, 200);
+        var items   = await q.Skip((page - 1) * size).Take(size).ToListAsync(ct);
+
+        return new PagedData<Contact>
+        {
+            Items      = items,
+            Page       = page,
+            PageSize   = size,
+            TotalCount = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)size),
+        };
+    }
+
+    public async Task<int> PreviewCountAsync(string rulesJson, CancellationToken ct = default)
+    {
+        var q = db.Set<Contact>()
+            .Include(c => c.Emails)
+            .Include(c => c.Phones)
+            .AsQueryable();
+        return await SmartListRuleEngine.Apply(q, rulesJson).CountAsync(ct);
+    }
+
+    // ── Mutations ─────────────────────────────────────────────────────────────
+
+    public async Task<SmartList> CreateAsync(
+        string name, string color, string description, string rulesJson,
+        CancellationToken ct = default)
+    {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set.");
+
+        var maxOrder = await db.Set<SmartList>()
+            .OrderByDescending(s => s.SortOrder)
+            .Select(s => (int?)s.SortOrder)
+            .FirstOrDefaultAsync(ct) ?? -1;
+
+        var sl = new SmartList
+        {
+            TenantId    = tenantId,
+            Name        = name,
+            Color       = color,
+            Description = description,
+            RulesJson   = rulesJson,
+            SortOrder   = maxOrder + 1,
+        };
+        db.Set<SmartList>().Add(sl);
+        await db.SaveChangesAsync(ct);
+        return sl;
+    }
+
+    public async Task<SmartList> UpdateAsync(
+        Guid id, string name, string color, string description, string rulesJson,
+        CancellationToken ct = default)
+    {
+        var sl = await db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct)
+            ?? throw new KeyNotFoundException("Smart list not found.");
+
+        sl.Name        = name;
+        sl.Color       = color;
+        sl.Description = description;
+        sl.RulesJson   = rulesJson;
+        sl.UpdatedAt   = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return sl;
+    }
+
+    public async Task<SmartList> RenameAsync(Guid id, string name, CancellationToken ct = default)
+    {
+        var sl = await db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct)
+            ?? throw new KeyNotFoundException("Smart list not found.");
+
+        if (sl.IsSystem) throw new InvalidOperationException("System lists cannot be renamed.");
+        sl.Name      = name;
+        sl.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+        return sl;
+    }
+
+    public async Task<SmartList> DuplicateAsync(Guid id, CancellationToken ct = default)
+    {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set.");
+
+        var src = await db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct)
+            ?? throw new KeyNotFoundException("Smart list not found.");
+
+        var maxOrder = await db.Set<SmartList>()
+            .OrderByDescending(s => s.SortOrder)
+            .Select(s => (int?)s.SortOrder)
+            .FirstOrDefaultAsync(ct) ?? -1;
+
+        var copy = new SmartList
+        {
+            TenantId    = tenantId,
+            Name        = $"{src.Name} (copy)",
+            Color       = src.Color,
+            Description = src.Description,
+            RulesJson   = src.RulesJson,
+            SortOrder   = maxOrder + 1,
+        };
+        db.Set<SmartList>().Add(copy);
+        await db.SaveChangesAsync(ct);
+        return copy;
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var sl = await db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct)
+            ?? throw new KeyNotFoundException("Smart list not found.");
+
+        if (sl.IsSystem) throw new InvalidOperationException("System lists cannot be deleted.");
+        db.Set<SmartList>().Remove(sl);
+        await db.SaveChangesAsync(ct);
     }
 }
