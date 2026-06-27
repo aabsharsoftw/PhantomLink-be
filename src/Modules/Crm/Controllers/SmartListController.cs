@@ -13,7 +13,7 @@ namespace PhantomPulse.Crm.Controllers;
 [Authorize]
 [ApiController]
 [Route("crm/smart-lists")]
-public class SmartListController(SmartListService service, LeadService leads) : ControllerBase
+public class SmartListController(SmartListService service) : ControllerBase
 {
     private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
 
@@ -115,6 +115,34 @@ public class SmartListController(SmartListService service, LeadService leads) : 
         var count = await service.PreviewCountAsync(req.RulesJson, ct);
         return Ok(ApiResponse<SmartListPreviewResponse>.Ok(
             new SmartListPreviewResponse(count), "Preview ready"));
+    }
+
+    // ── GET /api/crm/smart-lists/for-contact/{contactId} ─────────────────────
+    [RequirePermission("contacts.view")]
+    [HttpGet("for-contact/{contactId:guid}")]
+    public async Task<IActionResult> GetForContact(Guid contactId, CancellationToken ct)
+    {
+        var lists = await service.GetSmartListsForContactAsync(contactId, ct);
+        var resp  = lists.Select(sl => MapSmartList(sl, -1)).ToList();
+        return Ok(ApiResponse<List<SmartListResponse>>.Ok(resp, "Smart lists for contact fetched"));
+    }
+
+    // ── POST /api/crm/smart-lists/{id}/members/{contactId} ───────────────────
+    [RequirePermission("contacts.edit")]
+    [HttpPost("{id:guid}/members/{contactId:guid}")]
+    public async Task<IActionResult> AddMember(Guid id, Guid contactId, CancellationToken ct)
+    {
+        await service.AddMemberAsync(id, contactId, ct);
+        return Ok(ApiResponse<object>.Ok(new { smartListId = id, contactId }, "Member added"));
+    }
+
+    // ── DELETE /api/crm/smart-lists/{id}/members/{contactId} ─────────────────
+    [RequirePermission("contacts.edit")]
+    [HttpDelete("{id:guid}/members/{contactId:guid}")]
+    public async Task<IActionResult> RemoveMember(Guid id, Guid contactId, CancellationToken ct)
+    {
+        await service.RemoveMemberAsync(id, contactId, ct);
+        return Ok(ApiResponse<object>.Ok(new { smartListId = id, contactId }, "Member removed"));
     }
 
     // ── Mappers ───────────────────────────────────────────────────────────────

@@ -39,8 +39,9 @@ public sealed record CreateLeadRequest(
     string Notes     = "",
     Guid?  OwnerId   = null,
     string OwnerName = "",
-    IReadOnlyList<EmailInput>? Emails = null,
-    IReadOnlyList<PhoneInput>? Phones = null);
+    IReadOnlyList<EmailInput>?  Emails       = null,
+    IReadOnlyList<PhoneInput>?  Phones       = null,
+    IReadOnlyList<Guid>?        SmartListIds = null);
 
 public sealed record UpdateScoreRequest(int Delta);
 public sealed record UpdateStatusRequest(string Status);

@@ -423,6 +423,21 @@ public class LeadService(DbContext db, ITenantContext tenant)
 
         db.Set<Contact>().Add(c);
         await db.SaveChangesAsync(ct);
+
+        if (req.SmartListIds is { Count: > 0 })
+        {
+            foreach (var slId in req.SmartListIds)
+            {
+                db.Set<ContactSmartListMember>().Add(new ContactSmartListMember
+                {
+                    ContactId   = c.Id,
+                    SmartListId = slId,
+                    TenantId    = tenantId,
+                });
+            }
+            await db.SaveChangesAsync(ct);
+        }
+
         return c;
     }
 
@@ -873,7 +888,11 @@ public class SmartListService(DbContext db, ITenantContext tenant)
         var result = new List<(SmartList, int)>();
         foreach (var sl in lists)
         {
-            var count = SmartListRuleEngine.Count(baseQuery.AsQueryable(), sl.RulesJson);
+            var ruleIds  = SmartListRuleEngine.Apply(baseQuery.AsQueryable(), sl.RulesJson).Select(c => c.Id);
+            var memberIds = db.Set<ContactSmartListMember>()
+                .Where(m => m.SmartListId == sl.Id)
+                .Select(m => m.ContactId);
+            var count = await ruleIds.Union(memberIds).CountAsync(ct);
             result.Add((sl, count));
         }
         return result;
@@ -888,12 +907,20 @@ public class SmartListService(DbContext db, ITenantContext tenant)
         var sl = await db.Set<SmartList>().FirstOrDefaultAsync(s => s.Id == id, ct)
             ?? throw new KeyNotFoundException("Smart list not found.");
 
+        var ruleMatchedIds = SmartListRuleEngine.Apply(
+                db.Set<Contact>().AsQueryable(), sl.RulesJson)
+            .Select(c => c.Id);
+
+        var manualMemberIds = db.Set<ContactSmartListMember>()
+            .Where(m => m.SmartListId == id)
+            .Select(m => m.ContactId);
+
+        var allIds = ruleMatchedIds.Union(manualMemberIds);
+
         var q = db.Set<Contact>()
             .Include(c => c.Emails)
             .Include(c => c.Phones)
-            .AsQueryable();
-
-        q = SmartListRuleEngine.Apply(q, sl.RulesJson);
+            .Where(c => allIds.Contains(c.Id));
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -1022,6 +1049,48 @@ public class SmartListService(DbContext db, ITenantContext tenant)
 
         if (sl.IsSystem) throw new InvalidOperationException("System lists cannot be deleted.");
         db.Set<SmartList>().Remove(sl);
+        await db.SaveChangesAsync(ct);
+    }
+
+    // ── Manual membership ─────────────────────────────────────────────────────
+
+    public async Task<List<SmartList>> GetSmartListsForContactAsync(Guid contactId, CancellationToken ct = default)
+    {
+        var memberListIds = await db.Set<ContactSmartListMember>()
+            .Where(m => m.ContactId == contactId)
+            .Select(m => m.SmartListId)
+            .ToListAsync(ct);
+
+        return await db.Set<SmartList>()
+            .Where(s => memberListIds.Contains(s.Id))
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Name)
+            .ToListAsync(ct);
+    }
+
+    public async Task AddMemberAsync(Guid smartListId, Guid contactId, CancellationToken ct = default)
+    {
+        var tenantId = tenant.TenantId
+            ?? throw new InvalidOperationException("Tenant context is not set.");
+
+        var exists = await db.Set<ContactSmartListMember>()
+            .AnyAsync(m => m.SmartListId == smartListId && m.ContactId == contactId, ct);
+        if (exists) return;
+
+        db.Set<ContactSmartListMember>().Add(new ContactSmartListMember
+        {
+            ContactId   = contactId,
+            SmartListId = smartListId,
+            TenantId    = tenantId,
+        });
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task RemoveMemberAsync(Guid smartListId, Guid contactId, CancellationToken ct = default)
+    {
+        var entry = await db.Set<ContactSmartListMember>()
+            .FirstOrDefaultAsync(m => m.SmartListId == smartListId && m.ContactId == contactId, ct);
+        if (entry is null) return;
+        db.Set<ContactSmartListMember>().Remove(entry);
         await db.SaveChangesAsync(ct);
     }
 }

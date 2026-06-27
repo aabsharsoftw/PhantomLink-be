@@ -32,7 +32,8 @@ public class AppDbContext(
     public DbSet<ImportBatch>  ImportBatches => Set<ImportBatch>();
     public DbSet<Tag>          Tags          => Set<Tag>();
     public DbSet<Deal>         Deals         => Set<Deal>();
-    public DbSet<SmartList>    SmartLists    => Set<SmartList>();
+    public DbSet<SmartList>               SmartLists    => Set<SmartList>();
+    public DbSet<ContactSmartListMember>  SmartListMembers => Set<ContactSmartListMember>();
 
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
@@ -77,6 +78,17 @@ public class AppDbContext(
         b.Entity<Deal>()
             .Property(x => x.CustomFields)
             .HasColumnType("jsonb");
+
+        b.Entity<ContactSmartListMember>(e =>
+        {
+            e.ToTable("contact_smart_list_members");
+            e.HasKey(m => new { m.ContactId, m.SmartListId });
+            e.Property(m => m.ContactId).HasColumnName("contact_id");
+            e.Property(m => m.SmartListId).HasColumnName("smart_list_id");
+            e.Property(m => m.TenantId).HasColumnName("tenant_id");
+            e.Property(m => m.CreatedAt).HasColumnName("created_at");
+            e.HasQueryFilter(m => m.TenantId == _tenant.TenantId || _tenant.Scope == UserScope.Platform);
+        });
     }
 
     private void ApplyTenantFilter<T>(ModelBuilder b)

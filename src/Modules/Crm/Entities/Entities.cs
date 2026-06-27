@@ -91,3 +91,12 @@ public class SmartList : BaseEntity
     public string RulesJson   { get; set; } = """{"operator":"and","conditions":[]}""";
     public int    SortOrder   { get; set; }
 }
+
+// Join table for manual (non-rule) Smart List membership
+public class ContactSmartListMember
+{
+    public Guid ContactId   { get; set; }
+    public Guid SmartListId { get; set; }
+    public Guid TenantId    { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
